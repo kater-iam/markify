@@ -1,9 +1,8 @@
 {
   "name": "markify-supabase",
   "version": "1.0.0",
-  "type": "module",
   "scripts": {
-    "seed:images": "NODE_OPTIONS='--loader ts-node/esm' node --experimental-specifier-resolution=node seed_images.ts",
+    "seed:images": "ts-node seed_images.ts",
     "test": "mocha -r ts-node/register 'tests/**/*.test.ts'"
   },
   "devDependencies": {
