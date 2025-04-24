@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "seed:images": "ts-node --esm seed_images.ts",
+    "seed:images": "NODE_OPTIONS='--loader ts-node/esm' node --experimental-specifier-resolution=node seed_images.ts",
     "test": "cd tests && npm test"
   },
   "devDependencies": {
