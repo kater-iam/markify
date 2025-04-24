@@ -1,0 +1,16 @@
+{
+  "name": "markify-supabase",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "seed:images": "ts-node --esm seed_images.ts",
+    "test": "cd tests && npm test"
+  },
+  "devDependencies": {
+    "@supabase/supabase-js": "^2.39.7",
+    "@types/node": "^20.11.30",
+    "dotenv": "^16.4.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.2"
+  }
+} 
