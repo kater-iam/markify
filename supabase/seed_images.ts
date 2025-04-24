@@ -4,6 +4,7 @@ import * as path from 'node:path';
 import * as dotenv from 'dotenv';
 import { fileURLToPath } from 'node:url';
 import * as process from 'node:process';
+import sharp from 'sharp';
 
 dotenv.config();
 
@@ -17,6 +18,22 @@ const STORAGE_DIR = path.join(__dirname, '..', 'storage');
 const DEFAULT_SUPABASE_URL = 'http://127.0.0.1:54411';
 const DEFAULT_SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU';
 
+async function getImageMetadata(filePath: string) {
+  try {
+    const metadata = await sharp(filePath).metadata();
+    return {
+      width: metadata.width || 800,
+      height: metadata.height || 600
+    };
+  } catch (error) {
+    console.error(`Failed to get metadata for ${filePath}:`, error);
+    return {
+      width: 800,
+      height: 600
+    };
+  }
+}
+
 async function uploadImagesInDirectory(supabase: any, directory: string) {
   const files = fs.readdirSync(directory);
   
@@ -27,6 +44,8 @@ async function uploadImagesInDirectory(supabase: any, directory: string) {
     
     try {
       const fileContent = fs.readFileSync(localPath);
+      const { width, height } = await getImageMetadata(localPath);
+      
       const { error: uploadError } = await supabase.storage
         .from('original_images')
         .upload(file, fileContent, {
@@ -37,7 +56,25 @@ async function uploadImagesInDirectory(supabase: any, directory: string) {
       if (uploadError) {
         console.error(`Failed to upload ${file}:`, uploadError);
       } else {
-        console.log(`Successfully uploaded ${file}`);
+        // 画像情報をDBに保存
+        const { data: publicUrlData } = supabase.storage.from('original_images').getPublicUrl(file);
+        
+        const { error: dbError } = await supabase
+          .from('images')
+          .insert({
+            profile_id: '00000000-0000-0000-0000-000000000001',
+            file_path: file,
+            original_filename: file,
+            name: file.split('.')[0],
+            width,
+            height
+          });
+
+        if (dbError) {
+          console.error(`Failed to save image data to DB for ${file}:`, dbError);
+        } else {
+          console.log(`Successfully uploaded and saved ${file}`);
+        }
       }
     } catch (error) {
       console.error(`Error processing ${file}:`, error);

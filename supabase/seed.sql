@@ -75,6 +75,8 @@ INSERT INTO public.images (
   file_path, 
   original_filename,
   name,
+  width,
+  height,
   created_at, 
   updated_at
 )
@@ -99,6 +101,8 @@ SELECT
     WHEN 2 THEN format('印刷文書 %03s', gs.i)
     WHEN 3 THEN format('混合文書 %03s', gs.i)
   END AS name,
+  800 AS width,
+  1200 AS height,
   now() - interval '1 day' * (random() * 30)::integer,
   now() - interval '1 day' * (random() * 30)::integer
 FROM generate_series(1, 80) AS gs(i);
@@ -110,6 +114,8 @@ INSERT INTO public.images (
   file_path, 
   original_filename,
   name,
+  width,
+  height,
   created_at, 
   updated_at
 )
@@ -134,6 +140,8 @@ SELECT
     WHEN 2 THEN format('商品写真 %03s', gs.i)
     WHEN 3 THEN format('建築写真 %03s', gs.i)
   END AS name,
+  1920 AS width,
+  1080 AS height,
   now() - interval '1 day' * (random() * 30)::integer,
   now() - interval '1 day' * (random() * 30)::integer
 FROM generate_series(1, 80) AS gs(i);
@@ -145,6 +153,8 @@ INSERT INTO public.images (
   file_path, 
   original_filename,
   name,
+  width,
+  height,
   created_at, 
   updated_at
 )
@@ -169,6 +179,8 @@ SELECT
     WHEN 2 THEN format('ダイアグラム %03s', gs.i)
     WHEN 3 THEN format('表 %03s', gs.i)
   END AS name,
+  1024 AS width,
+  768 AS height,
   now() - interval '1 day' * (random() * 30)::integer,
   now() - interval '1 day' * (random() * 30)::integer
 FROM generate_series(1, 40) AS gs(i);
