@@ -69,46 +69,106 @@ FROM generate_series(2, 31) AS gs(i);
 
 -- 3. Seed images (200 images with various types)
 -- Document category (80 images)
-INSERT INTO public.images (id, profile_id, file_path, created_at, updated_at)
+INSERT INTO public.images (
+  id, 
+  profile_id, 
+  file_path, 
+  original_filename,
+  name,
+  created_at, 
+  updated_at
+)
 SELECT
   md5(format('doc-image-%s', gs.i))::uuid AS id,
   '00000000-0000-0000-0000-000000000001'::uuid AS profile_id,
   CASE (gs.i % 4)
-    WHEN 0 THEN format('documents/handwritten_%03s.jpg', gs.i)
-    WHEN 1 THEN format('documents/typewriter_%03s.jpg', gs.i)
-    WHEN 2 THEN format('documents/printed_%03s.jpg', gs.i)
-    WHEN 3 THEN format('documents/mixed_%03s.jpg', gs.i)
+    WHEN 0 THEN format('handwritten_%03s.jpg', gs.i)
+    WHEN 1 THEN format('typewriter_%03s.jpg', gs.i)
+    WHEN 2 THEN format('printed_%03s.jpg', gs.i)
+    WHEN 3 THEN format('mixed_%03s.jpg', gs.i)
   END AS file_path,
+  CASE (gs.i % 4)
+    WHEN 0 THEN format('handwritten_%03s.jpg', gs.i)
+    WHEN 1 THEN format('typewriter_%03s.jpg', gs.i)
+    WHEN 2 THEN format('printed_%03s.jpg', gs.i)
+    WHEN 3 THEN format('mixed_%03s.jpg', gs.i)
+  END AS original_filename,
+  CASE (gs.i % 4)
+    WHEN 0 THEN format('手書きドキュメント %03s', gs.i)
+    WHEN 1 THEN format('タイプライター文書 %03s', gs.i)
+    WHEN 2 THEN format('印刷文書 %03s', gs.i)
+    WHEN 3 THEN format('混合文書 %03s', gs.i)
+  END AS name,
   now() - interval '1 day' * (random() * 30)::integer,
   now() - interval '1 day' * (random() * 30)::integer
 FROM generate_series(1, 80) AS gs(i);
 
 -- Photo category (80 images)
-INSERT INTO public.images (id, profile_id, file_path, created_at, updated_at)
+INSERT INTO public.images (
+  id, 
+  profile_id, 
+  file_path, 
+  original_filename,
+  name,
+  created_at, 
+  updated_at
+)
 SELECT
   md5(format('photo-image-%s', gs.i))::uuid AS id,
   '00000000-0000-0000-0000-000000000001'::uuid AS profile_id,
   CASE (gs.i % 4)
-    WHEN 0 THEN format('photos/landscape_%03s.jpg', gs.i)
-    WHEN 1 THEN format('photos/portrait_%03s.jpg', gs.i)
-    WHEN 2 THEN format('photos/product_%03s.jpg', gs.i)
-    WHEN 3 THEN format('photos/architecture_%03s.jpg', gs.i)
+    WHEN 0 THEN format('landscape_%03s.jpg', gs.i)
+    WHEN 1 THEN format('portrait_%03s.jpg', gs.i)
+    WHEN 2 THEN format('product_%03s.jpg', gs.i)
+    WHEN 3 THEN format('architecture_%03s.jpg', gs.i)
   END AS file_path,
+  CASE (gs.i % 4)
+    WHEN 0 THEN format('landscape_%03s.jpg', gs.i)
+    WHEN 1 THEN format('portrait_%03s.jpg', gs.i)
+    WHEN 2 THEN format('product_%03s.jpg', gs.i)
+    WHEN 3 THEN format('architecture_%03s.jpg', gs.i)
+  END AS original_filename,
+  CASE (gs.i % 4)
+    WHEN 0 THEN format('風景写真 %03s', gs.i)
+    WHEN 1 THEN format('ポートレート %03s', gs.i)
+    WHEN 2 THEN format('商品写真 %03s', gs.i)
+    WHEN 3 THEN format('建築写真 %03s', gs.i)
+  END AS name,
   now() - interval '1 day' * (random() * 30)::integer,
   now() - interval '1 day' * (random() * 30)::integer
 FROM generate_series(1, 80) AS gs(i);
 
 -- Chart & Graph category (40 images)
-INSERT INTO public.images (id, profile_id, file_path, created_at, updated_at)
+INSERT INTO public.images (
+  id, 
+  profile_id, 
+  file_path, 
+  original_filename,
+  name,
+  created_at, 
+  updated_at
+)
 SELECT
   md5(format('chart-image-%s', gs.i))::uuid AS id,
   '00000000-0000-0000-0000-000000000001'::uuid AS profile_id,
   CASE (gs.i % 4)
-    WHEN 0 THEN format('charts/chart_%03s.jpg', gs.i)
-    WHEN 1 THEN format('charts/graph_%03s.jpg', gs.i)
-    WHEN 2 THEN format('charts/diagram_%03s.jpg', gs.i)
-    WHEN 3 THEN format('charts/table_%03s.jpg', gs.i)
+    WHEN 0 THEN format('chart_%03s.jpg', gs.i)
+    WHEN 1 THEN format('graph_%03s.jpg', gs.i)
+    WHEN 2 THEN format('diagram_%03s.jpg', gs.i)
+    WHEN 3 THEN format('table_%03s.jpg', gs.i)
   END AS file_path,
+  CASE (gs.i % 4)
+    WHEN 0 THEN format('chart_%03s.jpg', gs.i)
+    WHEN 1 THEN format('graph_%03s.jpg', gs.i)
+    WHEN 2 THEN format('diagram_%03s.jpg', gs.i)
+    WHEN 3 THEN format('table_%03s.jpg', gs.i)
+  END AS original_filename,
+  CASE (gs.i % 4)
+    WHEN 0 THEN format('チャート %03s', gs.i)
+    WHEN 1 THEN format('グラフ %03s', gs.i)
+    WHEN 2 THEN format('ダイアグラム %03s', gs.i)
+    WHEN 3 THEN format('表 %03s', gs.i)
+  END AS name,
   now() - interval '1 day' * (random() * 30)::integer,
   now() - interval '1 day' * (random() * 30)::integer
 FROM generate_series(1, 40) AS gs(i);

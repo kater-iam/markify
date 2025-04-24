@@ -3,8 +3,10 @@ CREATE TABLE public.images (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   profile_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   file_path text NOT NULL,
-  width integer,
-  height integer,
+  original_filename text NOT NULL,
+  name text NOT NULL,
+  width integer NOT NULL,
+  height integer NOT NULL,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );

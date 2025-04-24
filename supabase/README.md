@@ -52,22 +52,60 @@ curl -H "Authorization: Bearer $ACCESS_TOKEN" http://localhost:54321/functions/v
 
 ## シード画像機能
 
-### 環境変数の設定
+### 1. 画像の生成
+
+開発環境用のテスト画像を生成するには、以下のコマンドを実行します：
+
+```bash
+# プロジェクトルートディレクトリで実行
+npx ts-node scripts/generate_seed_images.ts
+```
+
+生成される画像：
+- ドキュメント画像（80枚）
+  - 手書き文書: `handwritten_*.jpg`
+  - タイプライター文書: `typewriter_*.jpg`
+  - 印刷文書: `printed_*.jpg`
+  - 混合文書: `mixed_*.jpg`
+- 写真画像（80枚）
+  - 風景写真: `landscape_*.jpg`
+  - ポートレート写真: `portrait_*.jpg`
+  - 商品写真: `product_*.jpg`
+  - 建築写真: `architecture_*.jpg`
+- チャート画像（40枚）
+  - チャート: `chart_*.jpg`
+  - グラフ: `graph_*.jpg`
+  - ダイアグラム: `diagram_*.jpg`
+  - 表: `table_*.jpg`
+
+画像は`storage/`ディレクトリ内のカテゴリごとのフォルダに生成されます。
+
+### 2. 画像のシーディング
+
+生成した画像をSupabaseのストレージにアップロードするには、以下の手順を実行します：
+
+1. 環境変数の設定
 `.env`ファイルに以下の環境変数を設定してください：
 ```bash
 SUPABASE_URL=http://127.0.0.1:54321  # ローカル開発時
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 ```
 
-### 実行方法
+> Note: 環境変数を設定しない場合、デフォルト値が使用されます。
+
+2. シーディングの実行
 ```bash
-# シード画像のアップロード
+# supabaseディレクトリで実行
 npm run seed:images
 ```
 
-シード画像は`original_images`バケットの以下のパスにアップロードされます：
-- `images/sample1.png`
-- `images/sample2.png`
-- `images/sample3.png`
+このコマンドは以下の処理を行います：
+- `original_images`バケットの存在確認（なければ作成）
+- `storage/`ディレクトリ内の全ての画像をアップロード
+- 画像は全て`original_images`バケットの直下に配置されます
 
-> Note: このスクリプトは開発環境でのテスト用です。本番環境では実際の画像データを使用してください。
+### 3. 注意事項
+
+- 生成された画像は開発・テスト環境専用です
+- 本番環境では実際のユーザーがアップロードした画像を使用してください
+- 画像の詳細な管理方針については`storage/README.md`を参照してください
