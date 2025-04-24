@@ -1,0 +1,10 @@
+---
+description: Editing Cursor rules
+globs: 
+alwaysApply: false
+---
+1. Cursor Rulesのmdcファイルは25行程度、最大でも50行以内に収まるようにしてください。
+2. ファイルが肥大化（50行を超える）場合、内容の分類によって分割が可能な場合にはファイルを分割してください。
+3. .cursor/rules にある mdc ファイルには適応させたいルールのみを記載し、 .cursor/rules_backgournd にある md ファイルにはそのルールを策定するに至った経緯、背景、実例などを記載してください。ファイル名のうち、拡張子を除いたものを対応させてください。
+4. rules の mdc ファイルと rules_background の md ファイルではリストは番号付きリストを採用し、番号ごとに対応させてください。
+
