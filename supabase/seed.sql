@@ -67,23 +67,133 @@ SELECT
   'general', now(), now()
 FROM generate_series(2, 31) AS gs(i);
 
--- 3. Seed images (50 images by admin)
-INSERT INTO public.images (id, profile_id, file_path, created_at, updated_at)
+-- 3. Seed images (200 images with various types)
+-- Document category (80 images)
+INSERT INTO public.images (
+  id, 
+  profile_id, 
+  file_path, 
+  original_filename,
+  name,
+  width,
+  height,
+  created_at, 
+  updated_at
+)
 SELECT
-  md5(format('image-id-%s', gs.i))::uuid AS id,
+  md5(format('doc-image-%s', gs.i))::uuid AS id,
   '00000000-0000-0000-0000-000000000001'::uuid AS profile_id,
-  format('images/image_%03s.jpg', gs.i) AS file_path,
-  now(), now()
-FROM generate_series(1, 50) AS gs(i);
+  CASE (gs.i % 4)
+    WHEN 0 THEN format('handwritten_%03s.jpg', gs.i)
+    WHEN 1 THEN format('typewriter_%03s.jpg', gs.i)
+    WHEN 2 THEN format('printed_%03s.jpg', gs.i)
+    WHEN 3 THEN format('mixed_%03s.jpg', gs.i)
+  END AS file_path,
+  CASE (gs.i % 4)
+    WHEN 0 THEN format('handwritten_%03s.jpg', gs.i)
+    WHEN 1 THEN format('typewriter_%03s.jpg', gs.i)
+    WHEN 2 THEN format('printed_%03s.jpg', gs.i)
+    WHEN 3 THEN format('mixed_%03s.jpg', gs.i)
+  END AS original_filename,
+  CASE (gs.i % 4)
+    WHEN 0 THEN format('手書きドキュメント %03s', gs.i)
+    WHEN 1 THEN format('タイプライター文書 %03s', gs.i)
+    WHEN 2 THEN format('印刷文書 %03s', gs.i)
+    WHEN 3 THEN format('混合文書 %03s', gs.i)
+  END AS name,
+  800 AS width,
+  1200 AS height,
+  now() - interval '1 day' * (random() * 30)::integer,
+  now() - interval '1 day' * (random() * 30)::integer
+FROM generate_series(1, 80) AS gs(i);
 
--- 4. Seed download_logs (3 logs per image)
+-- Photo category (80 images)
+INSERT INTO public.images (
+  id, 
+  profile_id, 
+  file_path, 
+  original_filename,
+  name,
+  width,
+  height,
+  created_at, 
+  updated_at
+)
+SELECT
+  md5(format('photo-image-%s', gs.i))::uuid AS id,
+  '00000000-0000-0000-0000-000000000001'::uuid AS profile_id,
+  CASE (gs.i % 4)
+    WHEN 0 THEN format('landscape_%03s.jpg', gs.i)
+    WHEN 1 THEN format('portrait_%03s.jpg', gs.i)
+    WHEN 2 THEN format('product_%03s.jpg', gs.i)
+    WHEN 3 THEN format('architecture_%03s.jpg', gs.i)
+  END AS file_path,
+  CASE (gs.i % 4)
+    WHEN 0 THEN format('landscape_%03s.jpg', gs.i)
+    WHEN 1 THEN format('portrait_%03s.jpg', gs.i)
+    WHEN 2 THEN format('product_%03s.jpg', gs.i)
+    WHEN 3 THEN format('architecture_%03s.jpg', gs.i)
+  END AS original_filename,
+  CASE (gs.i % 4)
+    WHEN 0 THEN format('風景写真 %03s', gs.i)
+    WHEN 1 THEN format('ポートレート %03s', gs.i)
+    WHEN 2 THEN format('商品写真 %03s', gs.i)
+    WHEN 3 THEN format('建築写真 %03s', gs.i)
+  END AS name,
+  1920 AS width,
+  1080 AS height,
+  now() - interval '1 day' * (random() * 30)::integer,
+  now() - interval '1 day' * (random() * 30)::integer
+FROM generate_series(1, 80) AS gs(i);
+
+-- Chart & Graph category (40 images)
+INSERT INTO public.images (
+  id, 
+  profile_id, 
+  file_path, 
+  original_filename,
+  name,
+  width,
+  height,
+  created_at, 
+  updated_at
+)
+SELECT
+  md5(format('chart-image-%s', gs.i))::uuid AS id,
+  '00000000-0000-0000-0000-000000000001'::uuid AS profile_id,
+  CASE (gs.i % 4)
+    WHEN 0 THEN format('chart_%03s.jpg', gs.i)
+    WHEN 1 THEN format('graph_%03s.jpg', gs.i)
+    WHEN 2 THEN format('diagram_%03s.jpg', gs.i)
+    WHEN 3 THEN format('table_%03s.jpg', gs.i)
+  END AS file_path,
+  CASE (gs.i % 4)
+    WHEN 0 THEN format('chart_%03s.jpg', gs.i)
+    WHEN 1 THEN format('graph_%03s.jpg', gs.i)
+    WHEN 2 THEN format('diagram_%03s.jpg', gs.i)
+    WHEN 3 THEN format('table_%03s.jpg', gs.i)
+  END AS original_filename,
+  CASE (gs.i % 4)
+    WHEN 0 THEN format('チャート %03s', gs.i)
+    WHEN 1 THEN format('グラフ %03s', gs.i)
+    WHEN 2 THEN format('ダイアグラム %03s', gs.i)
+    WHEN 3 THEN format('表 %03s', gs.i)
+  END AS name,
+  1024 AS width,
+  768 AS height,
+  now() - interval '1 day' * (random() * 30)::integer,
+  now() - interval '1 day' * (random() * 30)::integer
+FROM generate_series(1, 40) AS gs(i);
+
+-- 4. Seed download_logs (5 logs per image)
 INSERT INTO public.download_logs (log_id, profile_id, image_id, client_ip, created_at, updated_at)
 SELECT
-  md5(format('log-id-%s-%s', gs.i, log.j))::uuid AS log_id,
+  md5(format('log-id-%s-%s', i.id, log.j))::uuid AS log_id,
   -- Cycle through general users for logs
   md5(format('profile-id-%s', ((log.j - 1) % 30) + 2))::uuid AS profile_id,
-  md5(format('image-id-%s', gs.i))::uuid AS image_id,
-  format('192.168.0.%s', log.j + 10)::inet AS client_ip,
-  now(), now()
-FROM generate_series(1, 50) AS gs(i)
-CROSS JOIN generate_series(1, 3) AS log(j);
+  i.id AS image_id,
+  format('192.168.%s.%s', (random() * 255)::integer, (random() * 255)::integer)::inet AS client_ip,
+  now() - interval '1 day' * (random() * 30)::integer,
+  now() - interval '1 day' * (random() * 30)::integer
+FROM public.images i
+CROSS JOIN generate_series(1, 5) AS log(j);

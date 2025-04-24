@@ -1,13 +1,6 @@
-import { createClient } from "@refinedev/supabase";
+import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl= import.meta.env.VITE_SUPABASE_URL;
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_KEY;
 
-export const supabaseClient = createClient(supabaseUrl, supabaseKey, {
-  db: {
-    schema: "public",
-  },
-  auth: {
-    persistSession: true,
-  },
-});
+export const supabaseClient = createClient(supabaseUrl, supabaseKey);
