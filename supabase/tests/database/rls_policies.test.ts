@@ -5,7 +5,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-describe('RLS Policies Tests', () => {
+describe('RLS Policies Tests', function() {
   let adminClient: SupabaseClient;
   let generalUserClient: SupabaseClient;
   let testUserId: string;
