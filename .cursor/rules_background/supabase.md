@@ -45,6 +45,7 @@ CREATE TABLE example (
 -- ロールバック手順
 -- DROP TABLE example;
 ```
+- 初期バージョン（概ね v1.0 より前）については、既存のマイグレーションファイルを編集してまとめることで履歴の見通しが良くなる。
 
 ## 6. マイグレーションファイルの命名
 - `YYYYMMDDHHMMSS_descriptions.sql` 形式の例：
