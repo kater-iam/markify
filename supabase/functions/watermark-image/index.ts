@@ -11,73 +11,156 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-serve(async (req) => {
-  // CORS用のプリフライトリクエストの処理
+serve(async (req: Request) => {
+  // CORS用のプリフライトリクエスト対応
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    // リクエストボディの取得
-    const { imageId } = await req.json()
+    // 1. リクエスト受付
+    // GETメソッド以外は許可しない
+    if (req.method !== 'GET') {
+      return new Response(
+        JSON.stringify({ error: 'Method not allowed' }),
+        { status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // URLからimage_idを取得
+    const url = new URL(req.url)
+    const imageId = url.pathname.split('/').pop()
+    console.log('Image ID:', imageId)
 
     if (!imageId) {
-      throw new Error('画像IDが指定されていません')
+      return new Response(
+        JSON.stringify({ error: '画像IDが指定されていません' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
+
+    // JWTの検証
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // 環境変数のログ出力
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')
+    console.log('Environment variables:')
+    console.log('SUPABASE_URL:', supabaseUrl ? 'set' : 'not set')
+    console.log('SUPABASE_ANON_KEY:', supabaseAnonKey ? 'set' : 'not set')
 
     // Supabaseクライアントの初期化
     const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '' // サービスロールキーを使用
+      supabaseUrl ?? '',
+      supabaseAnonKey ?? '',
     )
 
-    // オリジナル画像の取得
-    const { data: imageData, error: downloadError } = await supabaseClient
-      .storage
-      .from('original_images') // バケット名を修正
-      .download(imageId)
+    // ユーザー認証の確認
+    const token = authHeader.replace('Bearer ', '')
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token)
 
-    if (downloadError) {
-      throw new Error('画像の取得に失敗しました')
+    if (authError || !user) {
+      console.error('Authentication error:', authError)
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
-    // 画像の処理
-    const processedImageBuffer = await processImage(await imageData.arrayBuffer())
+    console.log('Authenticated user:', user.id)
 
-    // 処理済み画像のアップロード
-    const watermarkedFileName = `watermarked_${imageId}`
-    const { error: uploadError } = await supabaseClient
-      .storage
-      .from('watermarked_images') // バケット名を修正
-      .upload(watermarkedFileName, processedImageBuffer, {
-        contentType: 'image/jpeg',
-        upsert: true
+    // 2. 画像情報の取得
+    console.log('Fetching image data from database...')
+    const { data: imageData, error: dbError } = await supabaseClient
+      .from('images')
+      .select('file_path, original_filename, width, height')
+      .eq('id', imageId)
+      .single()
+
+    if (dbError) {
+      console.error('Database error:', dbError)
+      console.error('Database error details:', {
+        message: dbError.message,
+        details: dbError.details,
+        hint: dbError.hint
       })
-
-    if (uploadError) {
-      throw new Error('処理済み画像のアップロードに失敗しました')
+      return new Response(
+        JSON.stringify({ error: 'Not Found' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
-    // 公開URLの取得
-    const { data: { publicUrl } } = supabaseClient
+    if (!imageData) {
+      console.log('No image data found for ID:', imageId)
+      return new Response(
+        JSON.stringify({ error: 'Not Found' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    console.log('Image data found:', {
+      file_path: imageData.file_path,
+      original_filename: imageData.original_filename
+    })
+
+    // 3. ストレージからの画像取得
+    console.log('Fetching image file from storage...')
+    const { data: imageFile, error: storageError } = await supabaseClient
       .storage
-      .from('watermarked_images') // バケット名を修正
-      .getPublicUrl(watermarkedFileName)
+      .from('images')
+      .download(imageData.file_path)
+
+    if (storageError) {
+      console.error('Storage error:', storageError)
+      return new Response(
+        JSON.stringify({ error: 'Not Found' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    if (!imageFile) {
+      console.log('No image file found at path:', imageData.file_path)
+      return new Response(
+        JSON.stringify({ error: 'Not Found' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // 4. 画像処理
+    const arrayBuffer = await imageFile.arrayBuffer()
+    const processedImage = await processImage(arrayBuffer, {
+      text: '© YOUR BRAND', // TODO: 設定から取得
+    })
+
+    // 5. レスポンス返却
+    // Content-Typeの決定（ファイル名の拡張子から判断）
+    const contentType = imageData.original_filename.toLowerCase().endsWith('.png')
+      ? 'image/png'
+      : 'image/jpeg'
 
     return new Response(
-      JSON.stringify({ url: publicUrl }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
+      processedImage,
+      { 
+        headers: {
+          ...corsHeaders,
+          'Content-Type': contentType,
+          'Cache-Control': 'public, max-age=3600'
+        }
       }
     )
+
   } catch (error) {
+    // エラーログの出力
+    console.error('Error:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
-      }
+      JSON.stringify({ error: 'Internal Server Error' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
 }) 
