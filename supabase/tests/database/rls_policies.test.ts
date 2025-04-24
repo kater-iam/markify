@@ -1,18 +1,18 @@
-const { createClient } = require('@supabase/supabase-js');
-const { expect } = require('chai');
-const { describe, it, before, after } = require('mocha');
-const dotenv = require('dotenv');
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { expect } from 'chai';
+import { describe, it, beforeAll, afterAll } from 'mocha';
+import { config } from 'dotenv';
 
-dotenv.config();
+config();
 
-describe('RLS Policies Tests', function() {
-  let adminClient;
-  let generalUserClient;
-  let testUserId;
-  let testProfileId;
-  let testImageId;
+describe('RLS Policies Tests', () => {
+  let adminClient: SupabaseClient;
+  let generalUserClient: SupabaseClient;
+  let testUserId: string;
+  let testProfileId: string;
+  let testImageId: string;
 
-  before(async () => {
+  beforeAll(async () => {
     // 管理者クライアントの設定
     adminClient = createClient(
       process.env.SUPABASE_URL!,
@@ -71,14 +71,14 @@ describe('RLS Policies Tests', function() {
     if (signInError) throw signInError;
   });
 
-  describe('profiles テーブルのRLSテスト', () => {
+  describe('profiles テーブル', () => {
     it('一般ユーザーは全てのプロファイルを参照できる', async () => {
       const { data, error } = await generalUserClient
         .from('profiles')
         .select('*');
-      expect(error).to.be.null;
-      expect(data).to.not.be.null;
-      expect(data!.length).to.be.greaterThan(0);
+      expect(error).toBeNull();
+      expect(data).not.toBeNull();
+      expect(data!.length).toBeGreaterThan(0);
     });
 
     it('一般ユーザーは新規プロファイルを作成できない', async () => {
@@ -91,7 +91,7 @@ describe('RLS Policies Tests', function() {
           last_name: 'User2',
           role: 'general'
         });
-      expect(error).to.not.be.null;
+      expect(error).not.toBeNull();
     });
 
     it('一般ユーザーは自身のプロファイルの特定フィールドのみ更新できる', async () => {
@@ -100,25 +100,25 @@ describe('RLS Policies Tests', function() {
         .from('profiles')
         .update({ first_name: 'Updated', last_name: 'User' })
         .eq('id', testProfileId);
-      expect(updateError).to.be.null;
+      expect(updateError).toBeNull();
 
       // codeの更新は許可されない
       const { error: codeUpdateError } = await generalUserClient
         .from('profiles')
         .update({ code: 'test003' })
         .eq('id', testProfileId);
-      expect(codeUpdateError).to.not.be.null;
+      expect(codeUpdateError).not.toBeNull();
     });
   });
 
-  describe('images テーブルのRLSテスト', () => {
+  describe('images テーブル', () => {
     it('一般ユーザーは自身の画像のみ参照できる', async () => {
       const { data, error } = await generalUserClient
         .from('images')
         .select('*');
-      expect(error).to.be.null;
-      expect(data).to.not.be.null;
-      expect(data!.every(img => img.profile_id === testProfileId)).to.be.true;
+      expect(error).toBeNull();
+      expect(data).not.toBeNull();
+      expect(data!.every(img => img.profile_id === testProfileId)).toBe(true);
     });
 
     it('一般ユーザーは画像を作成できない', async () => {
@@ -130,17 +130,17 @@ describe('RLS Policies Tests', function() {
           width: 200,
           height: 200
         });
-      expect(error).to.not.be.null;
+      expect(error).not.toBeNull();
     });
   });
 
-  describe('download_logs テーブルのRLSテスト', () => {
+  describe('download_logs テーブル', () => {
     it('一般ユーザーはダウンロードログを参照できない', async () => {
       const { data, error } = await generalUserClient
         .from('download_logs')
         .select('*');
-      expect(error).to.not.be.null;
-      expect(data).to.be.null;
+      expect(error).not.toBeNull();
+      expect(data).toBeNull();
     });
 
     it('一般ユーザーは自身のダウンロードログを作成できる', async () => {
@@ -151,11 +151,11 @@ describe('RLS Policies Tests', function() {
           image_id: testImageId,
           client_ip: '127.0.0.1'
         });
-      expect(error).to.be.null;
+      expect(error).toBeNull();
     });
   });
 
-  after(async () => {
+  afterAll(async () => {
     // テストデータのクリーンアップ
     await adminClient.from('download_logs').delete().eq('profile_id', testProfileId);
     await adminClient.from('images').delete().eq('id', testImageId);
