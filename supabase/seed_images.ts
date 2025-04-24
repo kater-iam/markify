@@ -48,7 +48,10 @@ async function main() {
       // オリジナル画像バケットにアップロード
       const { error: uploadError } = await supabase.storage
         .from('original_images')
-        .upload(image.path, fs.readFileSync(localPath));
+        .upload(image.path, fs.readFileSync(localPath), {
+          contentType: 'image/png',
+          upsert: true
+        });
 
       if (uploadError) {
         console.error(`Failed to upload ${image.name}:`, uploadError);
