@@ -14,17 +14,43 @@ const __dirname = path.dirname(__filename);
 const SEED_IMAGES_DIR = path.join(__dirname, 'seed_images');
 const TRANSPARENT_PIXEL = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==', 'base64');
 
+// ローカル環境のデフォルト値
+const DEFAULT_SUPABASE_URL = 'http://127.0.0.1:54411';
+const DEFAULT_SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU';
+
 async function main() {
-  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    console.error('Missing required environment variables');
-    process.exit(1);
-  }
+  const supabaseUrl = process.env.SUPABASE_URL || DEFAULT_SUPABASE_URL;
+  const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || DEFAULT_SERVICE_ROLE_KEY;
 
   // Supabaseクライアントの初期化
   const supabase = createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
+    supabaseUrl,
+    supabaseServiceRoleKey
   );
+
+  // バケットの存在確認
+  const { data: buckets, error: bucketsError } = await supabase
+    .storage
+    .listBuckets();
+
+  if (bucketsError) {
+    console.error('Failed to list buckets:', bucketsError);
+    process.exit(1);
+  }
+
+  const originalImagesBucket = buckets.find(b => b.name === 'original_images');
+  if (!originalImagesBucket) {
+    console.error('original_images bucket not found. Creating...');
+    const { error: createBucketError } = await supabase
+      .storage
+      .createBucket('original_images', { public: false });
+
+    if (createBucketError) {
+      console.error('Failed to create bucket:', createBucketError);
+      process.exit(1);
+    }
+    console.log('Successfully created original_images bucket');
+  }
 
   // シード画像用ディレクトリの作成
   if (!fs.existsSync(SEED_IMAGES_DIR)) {
