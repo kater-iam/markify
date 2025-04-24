@@ -1,5 +1,9 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+// 既存 import の下に追加
+import { createCanvas, loadImage } from 'https://deno.land/x/canvas@v1.4.2/mod.ts'
+import { encode as base64Encode } from 'https://deno.land/std@0.168.0/encoding/base64.ts'
+
 import { processImage } from '../_shared/image-processing.ts'
 
 const corsHeaders = {
@@ -24,19 +28,13 @@ serve(async (req) => {
     // Supabaseクライアントの初期化
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '' // サービスロールキーを使用
     )
-
-    // 認証情報の取得
-    const authHeader = req.headers.get('Authorization')
-    if (!authHeader) {
-      throw new Error('認証情報が必要です')
-    }
 
     // オリジナル画像の取得
     const { data: imageData, error: downloadError } = await supabaseClient
       .storage
-      .from('images')
+      .from('original_images') // バケット名を修正
       .download(imageId)
 
     if (downloadError) {
@@ -50,7 +48,7 @@ serve(async (req) => {
     const watermarkedFileName = `watermarked_${imageId}`
     const { error: uploadError } = await supabaseClient
       .storage
-      .from('processed-images')
+      .from('watermarked_images') // バケット名を修正
       .upload(watermarkedFileName, processedImageBuffer, {
         contentType: 'image/jpeg',
         upsert: true
@@ -63,7 +61,7 @@ serve(async (req) => {
     // 公開URLの取得
     const { data: { publicUrl } } = supabaseClient
       .storage
-      .from('processed-images')
+      .from('watermarked_images') // バケット名を修正
       .getPublicUrl(watermarkedFileName)
 
     return new Response(
