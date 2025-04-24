@@ -1,0 +1,16 @@
+---
+description: Git, GitHub, PRの作成などの操作を行う際に使用してください
+globs: 
+alwaysApply: false
+---
+1. ブランチ名は `feature/$(date '+%Y%m')/author/function-name` とする
+   - `YYYYMM` は date コマンドから取得
+   - `author` は作成者名
+   - `function-name` はハイフン区切りの機能名
+
+2. コミットメッセージは `- ${verb} ${message}` とし、英語で記述する
+   - データベースの更新は `- update database: ${変更内容}` とする
+
+3. Git コマンドの実行時に入力待ちにならないよう、`| cat` を付与する
+   - 例: `git log | cat`
+   - 例: `git diff | cat`

@@ -22,9 +22,10 @@ CREATE POLICY download_logs_insert ON public.download_logs
   FOR INSERT
   TO authenticated
   WITH CHECK (
-    auth.role() = 'admin'
-    OR profile_id = (
-      SELECT id FROM public.profiles WHERE user_id = auth.uid()
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE profiles.id = download_logs.profile_id
+      AND profiles.user_id = auth.uid()
     )
   );
 
@@ -56,11 +57,16 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Triggers for updated_at (トリガーは既に作成されているものを除く)
--- trg_profiles_updated_at はすでに存在するため作成しない
+-- Triggers for updated_at
 CREATE TRIGGER trg_images_updated_at
   BEFORE UPDATE ON public.images
   FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 CREATE TRIGGER trg_download_logs_updated_at
   BEFORE UPDATE ON public.download_logs
   FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+
+-- Column-Level Privileges
+-- 1. Revoke all privileges from authenticated users
+REVOKE ALL ON public.download_logs FROM authenticated;
+-- 2. Grant insert to authenticated users
+GRANT INSERT ON public.download_logs TO authenticated;

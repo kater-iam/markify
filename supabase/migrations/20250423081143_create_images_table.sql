@@ -17,8 +17,10 @@ CREATE POLICY images_select ON public.images
   FOR SELECT
   TO authenticated
   USING (
-    auth.role() = 'admin' OR profile_id = (
-      SELECT id FROM public.profiles WHERE user_id = auth.uid()
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE profiles.id = images.profile_id
+      AND profiles.user_id = auth.uid()
     )
   );
 

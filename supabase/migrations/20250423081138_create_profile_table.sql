@@ -13,9 +13,9 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   code varchar(20) NOT NULL UNIQUE,
-  first_name varchar(50) NOT NULL,
-  last_name varchar(50) NOT NULL,
-  role profile_role NOT NULL,
+  first_name varchar(50) NOT NULL DEFAULT '',
+  last_name varchar(50) NOT NULL DEFAULT '',
+  role profile_role NOT NULL DEFAULT 'general',
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
@@ -39,16 +39,11 @@ CREATE TRIGGER trg_profiles_updated_at
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
 -- 6. RLS Policies
--- 6.1 SELECT: admin can all, general can own
+-- 6.1 SELECT: all authenticated users can view all profiles
 CREATE POLICY profiles_select ON public.profiles
   FOR SELECT
   TO authenticated
-  USING (
-    auth.role() = 'admin'
-    OR id = (
-      SELECT id FROM public.profiles WHERE user_id = auth.uid()
-    )
-  );
+  USING (true);
 
 -- 6.2 INSERT: only admin
 CREATE POLICY profiles_insert ON public.profiles
@@ -62,15 +57,11 @@ CREATE POLICY profiles_update ON public.profiles
   TO authenticated
   USING (
     auth.role() = 'admin'
-    OR id = (
-      SELECT id FROM public.profiles WHERE user_id = auth.uid()
-    )
+    OR user_id = auth.uid()
   )
   WITH CHECK (
     auth.role() = 'admin'
-    OR id = (
-      SELECT id FROM public.profiles WHERE user_id = auth.uid()
-    )
+    OR user_id = auth.uid()
   );
 
 -- 6.4 DELETE: only admin
@@ -80,9 +71,11 @@ CREATE POLICY profiles_delete ON public.profiles
   USING (auth.role() = 'admin');
 
 -- 7. Column-Level Privileges
--- 7.1 Revoke update on code for general users
-REVOKE UPDATE (code) ON public.profiles FROM authenticated;
--- 7.2 Grant update on allowed columns for general users
-GRANT UPDATE (first_name, last_name, role) ON public.profiles TO authenticated;
+-- 7.1 Revoke all privileges from authenticated users
+REVOKE ALL ON public.profiles FROM authenticated;
+-- 7.2 Grant select to authenticated users
+GRANT SELECT ON public.profiles TO authenticated;
+-- 7.3 Grant update on specific columns for authenticated users
+GRANT UPDATE (first_name, last_name) ON public.profiles TO authenticated;
 
 -- End of Migration
