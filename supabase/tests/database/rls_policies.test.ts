@@ -1,16 +1,16 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { expect } from 'chai';
-import { describe, it, before, after } from 'mocha';
-import dotenv from 'dotenv';
+const { createClient } = require('@supabase/supabase-js');
+const { expect } = require('chai');
+const { describe, it, before, after } = require('mocha');
+const dotenv = require('dotenv');
 
 dotenv.config();
 
 describe('RLS Policies Tests', function() {
-  let adminClient: SupabaseClient;
-  let generalUserClient: SupabaseClient;
-  let testUserId: string;
-  let testProfileId: string;
-  let testImageId: string;
+  let adminClient;
+  let generalUserClient;
+  let testUserId;
+  let testProfileId;
+  let testImageId;
 
   before(async () => {
     // 管理者クライアントの設定
