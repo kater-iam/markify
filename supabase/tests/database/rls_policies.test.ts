@@ -1,4 +1,5 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { describe, expect, it, beforeAll, afterAll } from '@jest/globals';
 
 describe('RLS Policies Tests', () => {
   let adminClient: SupabaseClient;
