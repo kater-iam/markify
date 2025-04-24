@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "seed:images": "NODE_OPTIONS='--loader ts-node/esm' node --experimental-specifier-resolution=node seed_images.ts",
-    "test": "mocha --require ts-node/register --require tsconfig-paths/register --require source-map-support/register 'tests/database/**/*.test.ts'"
+    "test": "mocha -r ts-node/register 'tests/**/*.test.ts'"
   },
   "devDependencies": {
     "@supabase/supabase-js": "^2.39.7",
