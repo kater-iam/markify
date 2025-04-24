@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "seed:images": "ts-node seed_images.ts",
-    "test": "mocha -r ts-node/register 'tests/**/*.test.ts'"
+    "test": "mocha"
   },
   "devDependencies": {
     "@supabase/supabase-js": "^2.39.7",
