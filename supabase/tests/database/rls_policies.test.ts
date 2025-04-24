@@ -1,14 +1,23 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { describe, expect, it, beforeAll, afterAll } from '@jest/globals';
 
+// 環境変数の設定
+process.env.SUPABASE_URL = 'http://127.0.0.1:54411';
+process.env.SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0';
+process.env.SUPABASE_SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU';
+
 describe('RLS Policies Tests', () => {
   let adminClient: SupabaseClient;
   let generalUserClient: SupabaseClient;
   let testUserId: string;
   let testProfileId: string;
   let testImageId: string;
+  let testEmail: string;
 
   beforeAll(async () => {
+    // テストユーザーのメールアドレスを生成
+    testEmail = `test-${Date.now()}@example.com`;
+
     // 管理者クライアントの設定
     adminClient = createClient(
       process.env.SUPABASE_URL!,
@@ -23,7 +32,7 @@ describe('RLS Policies Tests', () => {
 
     // テストユーザーの作成
     const { data: authUser, error: authError } = await adminClient.auth.admin.createUser({
-      email: 'test@example.com',
+      email: testEmail,
       password: 'testpassword123',
       email_confirm: true
     });
@@ -35,7 +44,7 @@ describe('RLS Policies Tests', () => {
       .from('profiles')
       .insert({
         user_id: testUserId,
-        code: 'test001',
+        code: `test${Date.now()}`,
         first_name: 'Test',
         last_name: 'User',
         role: 'general'
@@ -61,7 +70,7 @@ describe('RLS Policies Tests', () => {
 
     // 一般ユーザーとしてログイン
     const { error: signInError } = await generalUserClient.auth.signInWithPassword({
-      email: 'test@example.com',
+      email: testEmail,
       password: 'testpassword123'
     });
     if (signInError) throw signInError;
