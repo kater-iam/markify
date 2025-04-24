@@ -15,15 +15,25 @@ ALTER TABLE public.download_logs ENABLE ROW LEVEL SECURITY;
 CREATE POLICY download_logs_select ON public.download_logs
   FOR SELECT
   TO authenticated
-  USING (auth.role() = 'admin');
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles 
+      WHERE profiles.user_id = auth.uid() 
+      AND profiles.role = 'admin'
+    )
+  );
 
 -- INSERT: admin and general (own only)
 CREATE POLICY download_logs_insert ON public.download_logs
   FOR INSERT
   TO authenticated
   WITH CHECK (
-    auth.role() = 'admin'
-    OR profile_id = (
+    EXISTS (
+      SELECT 1 FROM public.profiles 
+      WHERE profiles.user_id = auth.uid() 
+      AND profiles.role = 'admin'
+    )
+    OR profile_id IN (
       SELECT id FROM public.profiles WHERE user_id = auth.uid()
     )
   );
@@ -32,14 +42,32 @@ CREATE POLICY download_logs_insert ON public.download_logs
 CREATE POLICY download_logs_update ON public.download_logs
   FOR UPDATE
   TO authenticated
-  USING (auth.role() = 'admin')
-  WITH CHECK (auth.role() = 'admin');
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles 
+      WHERE profiles.user_id = auth.uid() 
+      AND profiles.role = 'admin'
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.profiles 
+      WHERE profiles.user_id = auth.uid() 
+      AND profiles.role = 'admin'
+    )
+  );
 
 -- DELETE: only admin
 CREATE POLICY download_logs_delete ON public.download_logs
   FOR DELETE
   TO authenticated
-  USING (auth.role() = 'admin');
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles 
+      WHERE profiles.user_id = auth.uid() 
+      AND profiles.role = 'admin'
+    )
+  );
 
 -- Indexes for foreign keys
 CREATE INDEX idx_profiles_user_id ON public.profiles(user_id);

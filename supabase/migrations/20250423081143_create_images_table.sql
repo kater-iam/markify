@@ -17,7 +17,12 @@ CREATE POLICY images_select ON public.images
   FOR SELECT
   TO authenticated
   USING (
-    auth.role() = 'admin' OR profile_id = (
+    EXISTS (
+      SELECT 1 FROM public.profiles 
+      WHERE profiles.user_id = auth.uid() 
+      AND profiles.role = 'admin'
+    )
+    OR profile_id IN (
       SELECT id FROM public.profiles WHERE user_id = auth.uid()
     )
   );
@@ -26,17 +31,41 @@ CREATE POLICY images_select ON public.images
 CREATE POLICY images_insert ON public.images
   FOR INSERT
   TO authenticated
-  WITH CHECK (auth.role() = 'admin');
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.profiles 
+      WHERE profiles.user_id = auth.uid() 
+      AND profiles.role = 'admin'
+    )
+  );
 
 -- UPDATE: only admin
 CREATE POLICY images_update ON public.images
   FOR UPDATE
   TO authenticated
-  USING (auth.role() = 'admin')
-  WITH CHECK (auth.role() = 'admin');
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles 
+      WHERE profiles.user_id = auth.uid() 
+      AND profiles.role = 'admin'
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.profiles 
+      WHERE profiles.user_id = auth.uid() 
+      AND profiles.role = 'admin'
+    )
+  );
 
 -- DELETE: only admin
 CREATE POLICY images_delete ON public.images
   FOR DELETE
   TO authenticated
-  USING (auth.role() = 'admin');
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles 
+      WHERE profiles.user_id = auth.uid() 
+      AND profiles.role = 'admin'
+    )
+  );

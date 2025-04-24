@@ -44,40 +44,61 @@ CREATE POLICY profiles_select ON public.profiles
   FOR SELECT
   TO authenticated
   USING (
-    auth.role() = 'admin'
-    OR id = (
-      SELECT id FROM public.profiles WHERE user_id = auth.uid()
+    -- Bootstrap access for first admin
+    auth.uid() = '00000000-0000-0000-0000-000000000001'
+    OR
+    EXISTS (
+      SELECT 1 FROM public.profiles 
+      WHERE profiles.user_id = auth.uid() 
+      AND profiles.role = 'admin'
     )
+    OR user_id = auth.uid()
   );
 
 -- 6.2 INSERT: only admin
 CREATE POLICY profiles_insert ON public.profiles
   FOR INSERT
   TO authenticated
-  WITH CHECK (auth.role() = 'admin');
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.profiles 
+      WHERE profiles.user_id = auth.uid() 
+      AND profiles.role = 'admin'
+    )
+  );
 
 -- 6.3 UPDATE: row-level by role
 CREATE POLICY profiles_update ON public.profiles
   FOR UPDATE
   TO authenticated
   USING (
-    auth.role() = 'admin'
-    OR id = (
-      SELECT id FROM public.profiles WHERE user_id = auth.uid()
+    EXISTS (
+      SELECT 1 FROM public.profiles 
+      WHERE profiles.user_id = auth.uid() 
+      AND profiles.role = 'admin'
     )
+    OR user_id = auth.uid()
   )
   WITH CHECK (
-    auth.role() = 'admin'
-    OR id = (
-      SELECT id FROM public.profiles WHERE user_id = auth.uid()
+    EXISTS (
+      SELECT 1 FROM public.profiles 
+      WHERE profiles.user_id = auth.uid() 
+      AND profiles.role = 'admin'
     )
+    OR user_id = auth.uid()
   );
 
 -- 6.4 DELETE: only admin
 CREATE POLICY profiles_delete ON public.profiles
   FOR DELETE
   TO authenticated
-  USING (auth.role() = 'admin');
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles 
+      WHERE profiles.user_id = auth.uid() 
+      AND profiles.role = 'admin'
+    )
+  );
 
 -- 7. Column-Level Privileges
 -- 7.1 Revoke update on code for general users
