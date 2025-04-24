@@ -1,9 +1,4 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { expect } from 'chai';
-import { describe, it, beforeAll, afterAll } from 'mocha';
-import { config } from 'dotenv';
-
-config();
 
 describe('RLS Policies Tests', () => {
   let adminClient: SupabaseClient;
@@ -162,4 +157,4 @@ describe('RLS Policies Tests', () => {
     await adminClient.from('profiles').delete().eq('id', testProfileId);
     await adminClient.auth.admin.deleteUser(testUserId);
   });
-}); 
+});
