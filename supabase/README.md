@@ -49,3 +49,25 @@ ACCESS_TOKEN=$(curl -s -X POST 'http://localhost:54321/auth/v1/token?grant_type=
 
 curl -H "Authorization: Bearer $ACCESS_TOKEN" http://localhost:54321/functions/v1/db-backup
 ```
+
+## シード画像機能
+
+### 環境変数の設定
+`.env`ファイルに以下の環境変数を設定してください：
+```bash
+SUPABASE_URL=http://127.0.0.1:54321  # ローカル開発時
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+```
+
+### 実行方法
+```bash
+# シード画像のアップロード
+npm run seed:images
+```
+
+シード画像は`original_images`バケットの以下のパスにアップロードされます：
+- `images/sample1.png`
+- `images/sample2.png`
+- `images/sample3.png`
+
+> Note: このスクリプトは開発環境でのテスト用です。本番環境では実際の画像データを使用してください。
