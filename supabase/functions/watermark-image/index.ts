@@ -60,11 +60,21 @@ serve(async (req: Request) => {
     const supabaseClient = createClient(
       supabaseUrl ?? '',
       supabaseAnonKey ?? '',
+      {
+        global: {
+          headers: { Authorization: 'Bearer ' + req.headers.get('Authorization') || '' },
+        },
+      }
     )
 
     // ユーザー認証の確認
     const token = authHeader.replace('Bearer ', '')
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token)
+    // const { data: user, error: authError } = await supabaseClient.auth.signInWithPassword({
+    //   email: 'user1@kater.jp',
+    //   password: 'password123'
+    // });
+
 
     if (authError || !user) {
       console.error('Authentication error:', authError)
@@ -74,7 +84,7 @@ serve(async (req: Request) => {
       )
     }
 
-    console.log('Authenticated user:', user.id)
+    console.log('Authenticated user:', user)
 
     // 2. 画像情報の取得
     console.log('Fetching image data from database...')
