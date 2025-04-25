@@ -50,7 +50,6 @@ serve(async (req: Request) => {
 
     // 環境変数のログ出力
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
-    // const supabaseUrl = 'http://kong:8000'
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')
     console.log('Environment variables:')
     console.log('SUPABASE_URL:', supabaseUrl || 'not set')
@@ -62,19 +61,13 @@ serve(async (req: Request) => {
       supabaseAnonKey ?? '',
       {
         global: {
-          headers: { Authorization: 'Bearer ' + req.headers.get('Authorization') || '' },
+          headers: { Authorization: req.headers.get('Authorization') || '' },
         },
       }
     )
 
-    // ユーザー認証の確認
-    const token = authHeader.replace('Bearer ', '')
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token)
-    // const { data: user, error: authError } = await supabaseClient.auth.signInWithPassword({
-    //   email: 'user1@kater.jp',
-    //   password: 'password123'
-    // });
-
+    // JWTで渡されたユーザーに変更
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(authHeader.replace('Bearer ', ''))
 
     if (authError || !user) {
       console.error('Authentication error:', authError)
@@ -84,7 +77,7 @@ serve(async (req: Request) => {
       )
     }
 
-    console.log('Authenticated user:', user)
+    console.log('Authenticated user:', user?.email)
 
     // 2. 画像情報の取得
     console.log('Fetching image data from database...')
