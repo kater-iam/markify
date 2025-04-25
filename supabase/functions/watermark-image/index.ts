@@ -5,6 +5,7 @@ import { createCanvas, loadImage } from 'https://deno.land/x/canvas@v1.4.2/mod.t
 import { encode as base64Encode } from 'https://deno.land/std@0.168.0/encoding/base64.ts'
 
 import { processImage } from '../_shared/image-processing.ts'
+import { Console } from "node:console";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -114,11 +115,25 @@ serve(async (req: Request) => {
     })
 
     // 3. ストレージからの画像取得
+    const adminClient = createClient(
+      supabaseUrl ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY')!
+      // Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      // {
+      //   auth: {
+      //     autoRefreshToken: false,
+      //   }
+      // }
+    );
+
+    console.log('Admin Client:', adminClient)
+
     console.log('Fetching image file from storage...')
-    const { data: imageFile, error: storageError } = await supabaseClient
+    const { data: imageFile, error: storageError } = await adminClient
       .storage
-      .from('images')
-      .download(imageData.file_path)
+      .from('original_images')
+      .download(`${imageData.file_path}`)
+      //.download('landscape_028.jpg')
 
     if (storageError) {
       console.error('Storage error:', storageError)
