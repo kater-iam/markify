@@ -6,6 +6,7 @@ functions.log
 node_modules
 
 # dotenvx
+!functions/.env
 .env.keys
 .env.local
 .env.*.local
