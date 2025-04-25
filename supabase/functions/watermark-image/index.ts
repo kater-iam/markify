@@ -50,10 +50,11 @@ serve(async (req: Request) => {
 
     // 環境変数のログ出力
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
+    // const supabaseUrl = 'http://kong:8000'
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')
     console.log('Environment variables:')
-    console.log('SUPABASE_URL:', supabaseUrl ? 'set' : 'not set')
-    console.log('SUPABASE_ANON_KEY:', supabaseAnonKey ? 'set' : 'not set')
+    console.log('SUPABASE_URL:', supabaseUrl || 'not set')
+    console.log('SUPABASE_ANON_KEY:', supabaseAnonKey || 'not set')
 
     // Supabaseクライアントの初期化
     const supabaseClient = createClient(
