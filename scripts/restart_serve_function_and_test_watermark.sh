@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -x
+set +x
 cd $(dirname $0)
 cd ../
 
@@ -15,4 +15,5 @@ ACCESS_TOKEN=$(curl -s -X POST $(supabase status --output json | jq -r '.API_URL
   -d '{"email":"'${USER}'","password":"'${PASSWORD}'"}' | jq -r '.access_token')
 
 # 関数を叩く
-echo $ACCESS_TOKEN; curl -H "Authorization: Bearer $ACCESS_TOKEN" http://localhost:54411/functions/v1/watermark-image/354b4968-a716-414a-a938-ec6ab26500c3
+# echo $ACCESS_TOKEN; 
+curl -v -o test.jpg -H "Authorization: Bearer $ACCESS_TOKEN" http://localhost:54411/functions/v1/watermark-image/354b4968-a716-414a-a938-ec6ab26500c3

@@ -117,26 +117,20 @@ serve(async (req: Request) => {
     // 3. ストレージからの画像取得
     const adminClient = createClient(
       supabaseUrl ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY')!
-      // Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      // {
-      //   auth: {
-      //     autoRefreshToken: false,
-      //   }
-      // }
+      // Deno.env.get('SUPABASE_ANON_KEY')!
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     );
 
-    console.log('Admin Client:', adminClient)
+    // console.log('Admin Client:', adminClient)
 
     console.log('Fetching image file from storage...')
     const { data: imageFile, error: storageError } = await adminClient
       .storage
       .from('original_images')
       .download(`${imageData.file_path}`)
-      //.download('landscape_028.jpg')
 
     if (storageError) {
-      console.error('Storage error:', storageError)
+      console.error('Storage error. This error might be due to the file not being found:', storageError)
       return new Response(
         JSON.stringify({ error: 'Not Found' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -153,6 +147,7 @@ serve(async (req: Request) => {
 
     // 4. 画像処理
     const arrayBuffer = await imageFile.arrayBuffer()
+    console.log('Array Buffer:', arrayBuffer)
     const processedImage = await processImage(arrayBuffer, {
       text: '© YOUR BRAND', // TODO: 設定から取得
     })
