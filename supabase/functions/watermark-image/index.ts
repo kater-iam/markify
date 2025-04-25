@@ -1,15 +1,69 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { serve } from 'https://deno.land/std@0.208.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-// 既存 import の下に追加
-import { createCanvas, loadImage } from 'https://deno.land/x/canvas@v1.4.2/mod.ts'
-import { encode as base64Encode } from 'https://deno.land/std@0.168.0/encoding/base64.ts'
 
-import { processImage } from '../_shared/image-processing.ts'
 import { Console } from "node:console";
+// deno run -A functions/watermark/index.ts でローカルテスト可
+import {
+  createCanvas,
+  loadImage,
+} from "https://deno.land/x/canvas@v1.4.2/mod.ts";
+import { encode as base64Encode } from "https://deno.land/std@0.208.0/encoding/base64.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+interface WatermarkOptions {
+  text: string;            // 透かし文字列
+  fontSizeRel?: number;    // 画像辺に対する割合 (0-1) 既定 0.1
+  opacity?: number;        // 0-1 既定 0.25
+  angle?: number;          // deg 既定 -45
+}
+
+
+/* ---------- 透かし処理本体 ---------- */
+export async function addWatermark(
+  buf: ArrayBuffer,
+  opt: WatermarkOptions = { text: "© YOUR BRAND" },
+  format: "jpeg" | "png" | "webp" = "jpeg",
+  quality = 0.82,
+): Promise<Uint8Array> {
+  const b64 = base64Encode(new Uint8Array(buf));
+  const img = await loadImage(`data:image/${format};base64,${b64}`);
+
+  const w = img.width();
+  const h = img.height();
+  const canvas = createCanvas(w, h);
+  const ctx = canvas.getContext("2d");
+
+  /* 元画像を描画 */
+  ctx.drawImage(img, 0, 0);
+
+  /* 透かし設定 */
+  const fontSize = Math.floor(
+    Math.min(w, h) * (opt.fontSizeRel ?? 0.1),
+  );
+  ctx.font = `${fontSize}px sans-serif`;
+  ctx.fillStyle = `rgba(255,255,255,${opt.opacity ?? 0.25})`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  /* 斜めで全面敷き詰め */
+  ctx.save();
+  ctx.translate(w / 2, h / 2);
+  ctx.rotate(((opt.angle ?? -45) * Math.PI) / 180);
+
+  const step = fontSize * 3;
+  const diag = Math.sqrt(w * w + h * h);
+  for (let x = -diag / 2; x < diag / 2; x += step) {
+    for (let y = -diag / 2; y < diag / 2; y += step) {
+      ctx.fillText(opt.text, x, y);
+    }
+  }
+  ctx.restore();
+
+  return canvas.toBuffer(`image/${format}`, Math.floor(quality * 100));
 }
 
 serve(async (req: Request) => {
@@ -148,7 +202,7 @@ serve(async (req: Request) => {
     // 4. 画像処理
     const arrayBuffer = await imageFile.arrayBuffer()
     console.log('Array Buffer:', arrayBuffer)
-    const processedImage = await processImage(arrayBuffer, {
+    const processedImage = await addWatermark(arrayBuffer, {
       text: '© YOUR BRAND', // TODO: 設定から取得
     })
 

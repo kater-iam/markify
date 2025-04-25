@@ -4,7 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
   createCanvas,
   loadImage,
-} from "https://deno.land/x/canvas@1.4.2/mod.ts";
+} from "https://deno.land/x/canvas@v1.4.2/mod.ts";
 import { encode as base64Encode } from "https://deno.land/std@0.208.0/encoding/base64.ts";
 
 interface WatermarkOptions {
@@ -15,7 +15,7 @@ interface WatermarkOptions {
 }
 
 /* ---------- 透かし処理本体 ---------- */
-async function addWatermark(
+export async function addWatermark(
   buf: ArrayBuffer,
   opt: WatermarkOptions = { text: "© YOUR BRAND" },
   format: "jpeg" | "png" | "webp" = "jpeg",
