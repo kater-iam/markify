@@ -61,9 +61,9 @@ INSERT INTO public.profiles (id, user_id, code, first_name, last_name, role, cre
 SELECT
   md5(format('profile-id-%s', gs.i))::uuid AS id,
   md5(format('user-id-%s', gs.i))::uuid AS user_id,
-  format('user%03s', gs.i - 1) AS code,
-  format('First%s', gs.i - 1) AS first_name,
-  format('Last%s', gs.i - 1) AS last_name,
+  'user' || to_char(gs.i - 1, 'FM000') AS code,
+  'First' || to_char(gs.i - 1, 'FM000') AS first_name,
+  'Last' || to_char(gs.i - 1, 'FM000') AS last_name,
   'general', now(), now()
 FROM generate_series(2, 31) AS gs(i);
 
@@ -84,22 +84,22 @@ SELECT
   md5(format('doc-image-%s', gs.i))::uuid AS id,
   '00000000-0000-0000-0000-000000000001'::uuid AS profile_id,
   CASE (gs.i % 4)
-    WHEN 0 THEN format('handwritten_%03s.jpg', gs.i)
-    WHEN 1 THEN format('typewriter_%03s.jpg', gs.i)
-    WHEN 2 THEN format('printed_%03s.jpg', gs.i)
-    WHEN 3 THEN format('mixed_%03s.jpg', gs.i)
+    WHEN 0 THEN 'handwritten_' || to_char(gs.i, 'FM000') || '.jpg'
+    WHEN 1 THEN 'typewriter_' || to_char(gs.i, 'FM000') || '.jpg'
+    WHEN 2 THEN 'printed_' || to_char(gs.i, 'FM000') || '.jpg'
+    WHEN 3 THEN 'mixed_' || to_char(gs.i, 'FM000') || '.jpg'
   END AS file_path,
   CASE (gs.i % 4)
-    WHEN 0 THEN format('handwritten_%03s.jpg', gs.i)
-    WHEN 1 THEN format('typewriter_%03s.jpg', gs.i)
-    WHEN 2 THEN format('printed_%03s.jpg', gs.i)
-    WHEN 3 THEN format('mixed_%03s.jpg', gs.i)
+    WHEN 0 THEN 'handwritten_' || to_char(gs.i, 'FM000') || '.jpg'
+    WHEN 1 THEN 'typewriter_' || to_char(gs.i, 'FM000') || '.jpg'
+    WHEN 2 THEN 'printed_' || to_char(gs.i, 'FM000') || '.jpg'
+    WHEN 3 THEN 'mixed_' || to_char(gs.i, 'FM000') || '.jpg'
   END AS original_filename,
   CASE (gs.i % 4)
-    WHEN 0 THEN format('手書きドキュメント %03s', gs.i)
-    WHEN 1 THEN format('タイプライター文書 %03s', gs.i)
-    WHEN 2 THEN format('印刷文書 %03s', gs.i)
-    WHEN 3 THEN format('混合文書 %03s', gs.i)
+    WHEN 0 THEN '手書きドキュメント ' || to_char(gs.i, 'FM000')
+    WHEN 1 THEN 'タイプライター文書 ' || to_char(gs.i, 'FM000')
+    WHEN 2 THEN '印刷文書 ' || to_char(gs.i, 'FM000')
+    WHEN 3 THEN '混合文書 ' || to_char(gs.i, 'FM000')
   END AS name,
   800 AS width,
   1200 AS height,
@@ -123,22 +123,22 @@ SELECT
   md5(format('photo-image-%s', gs.i))::uuid AS id,
   '00000000-0000-0000-0000-000000000001'::uuid AS profile_id,
   CASE (gs.i % 4)
-    WHEN 0 THEN format('landscape_%03s.jpg', gs.i)
-    WHEN 1 THEN format('portrait_%03s.jpg', gs.i)
-    WHEN 2 THEN format('product_%03s.jpg', gs.i)
-    WHEN 3 THEN format('architecture_%03s.jpg', gs.i)
+    WHEN 0 THEN 'landscape_' || to_char(gs.i, 'FM000') || '.jpg'
+    WHEN 1 THEN 'portrait_' || to_char(gs.i, 'FM000') || '.jpg'
+    WHEN 2 THEN 'product_' || to_char(gs.i, 'FM000') || '.jpg'
+    WHEN 3 THEN 'architecture_' || to_char(gs.i, 'FM000') || '.jpg'
   END AS file_path,
   CASE (gs.i % 4)
-    WHEN 0 THEN format('landscape_%03s.jpg', gs.i)
-    WHEN 1 THEN format('portrait_%03s.jpg', gs.i)
-    WHEN 2 THEN format('product_%03s.jpg', gs.i)
-    WHEN 3 THEN format('architecture_%03s.jpg', gs.i)
+    WHEN 0 THEN 'landscape_' || to_char(gs.i, 'FM000') || '.jpg'
+    WHEN 1 THEN 'portrait_' || to_char(gs.i, 'FM000') || '.jpg'
+    WHEN 2 THEN 'product_' || to_char(gs.i, 'FM000') || '.jpg'
+    WHEN 3 THEN 'architecture_' || to_char(gs.i, 'FM000') || '.jpg'
   END AS original_filename,
   CASE (gs.i % 4)
-    WHEN 0 THEN format('風景写真 %03s', gs.i)
-    WHEN 1 THEN format('ポートレート %03s', gs.i)
-    WHEN 2 THEN format('商品写真 %03s', gs.i)
-    WHEN 3 THEN format('建築写真 %03s', gs.i)
+    WHEN 0 THEN '風景写真 ' || to_char(gs.i, 'FM000')
+    WHEN 1 THEN 'ポートレート ' || to_char(gs.i, 'FM000')
+    WHEN 2 THEN '商品写真 ' || to_char(gs.i, 'FM000')
+    WHEN 3 THEN '建築写真 ' || to_char(gs.i, 'FM000')
   END AS name,
   1920 AS width,
   1080 AS height,
@@ -162,22 +162,22 @@ SELECT
   md5(format('chart-image-%s', gs.i))::uuid AS id,
   '00000000-0000-0000-0000-000000000001'::uuid AS profile_id,
   CASE (gs.i % 4)
-    WHEN 0 THEN format('chart_%03s.jpg', gs.i)
-    WHEN 1 THEN format('graph_%03s.jpg', gs.i)
-    WHEN 2 THEN format('diagram_%03s.jpg', gs.i)
-    WHEN 3 THEN format('table_%03s.jpg', gs.i)
+    WHEN 0 THEN 'chart_' || to_char(gs.i, 'FM000') || '.jpg'
+    WHEN 1 THEN 'graph_' || to_char(gs.i, 'FM000') || '.jpg'
+    WHEN 2 THEN 'diagram_' || to_char(gs.i, 'FM000') || '.jpg'
+    WHEN 3 THEN 'table_' || to_char(gs.i, 'FM000') || '.jpg'
   END AS file_path,
   CASE (gs.i % 4)
-    WHEN 0 THEN format('chart_%03s.jpg', gs.i)
-    WHEN 1 THEN format('graph_%03s.jpg', gs.i)
-    WHEN 2 THEN format('diagram_%03s.jpg', gs.i)
-    WHEN 3 THEN format('table_%03s.jpg', gs.i)
+    WHEN 0 THEN 'chart_' || to_char(gs.i, 'FM000') || '.jpg'
+    WHEN 1 THEN 'graph_' || to_char(gs.i, 'FM000') || '.jpg'
+    WHEN 2 THEN 'diagram_' || to_char(gs.i, 'FM000') || '.jpg'
+    WHEN 3 THEN 'table_' || to_char(gs.i, 'FM000') || '.jpg'
   END AS original_filename,
   CASE (gs.i % 4)
-    WHEN 0 THEN format('チャート %03s', gs.i)
-    WHEN 1 THEN format('グラフ %03s', gs.i)
-    WHEN 2 THEN format('ダイアグラム %03s', gs.i)
-    WHEN 3 THEN format('表 %03s', gs.i)
+    WHEN 0 THEN 'チャート ' || to_char(gs.i, 'FM000')
+    WHEN 1 THEN 'グラフ ' || to_char(gs.i, 'FM000')
+    WHEN 2 THEN 'ダイアグラム ' || to_char(gs.i, 'FM000')
+    WHEN 3 THEN '表 ' || to_char(gs.i, 'FM000')
   END AS name,
   1024 AS width,
   768 AS height,

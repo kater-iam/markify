@@ -1,6 +1,19 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "./cors.ts";
 
+// デバッグモードの設定
+const DEBUG_MODE = Deno.env.get('DEBUG') === 'true';
+
+// デバッグユーティリティ
+export const debug = {
+  log: (...args: unknown[]) => {
+    if (DEBUG_MODE) console.log('DEBUG:', ...args);
+  },
+  error: (...args: unknown[]) => {
+    if (DEBUG_MODE) console.error('DEBUG:', ...args);
+  }
+};
+
 // 標準化されたエラーレスポンスを生成する関数
 export function createErrorResponse(error: string, code: string, status: number = 400) {
   return new Response(
@@ -86,4 +99,24 @@ export function getRequiredEnvVar(name: string): string {
     throw new Error(`Required environment variable ${name} is not set`);
   }
   return value;
-} 
+}
+
+export const handleError = (error: unknown) => {
+  if (error instanceof Error) {
+    console.error('DEBUG: Fatal error:', error.message);
+    console.error('DEBUG: Error stack:', error.stack);
+  } else {
+    console.error('DEBUG: Unknown error occurred');
+  }
+  return new Response(
+    JSON.stringify({ error: 'Internal Server Error' }),
+    { 
+      status: 500, 
+      headers: { 
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+        'Content-Type': 'application/json' 
+      } 
+    }
+  );
+}; 

@@ -14,17 +14,11 @@ CREATE TABLE public.images (
 -- RLS for images
 ALTER TABLE public.images ENABLE ROW LEVEL SECURITY;
 
--- SELECT: admin can, general only own images
+-- SELECT: all authenticated users can view all images
 CREATE POLICY images_select ON public.images
   FOR SELECT
   TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.profiles
-      WHERE profiles.id = images.profile_id
-      AND profiles.user_id = auth.uid()
-    )
-  );
+  USING (true);
 
 -- INSERT: only admin
 CREATE POLICY images_insert ON public.images

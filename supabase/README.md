@@ -109,3 +109,20 @@ npm run seed:images
 - 生成された画像は開発・テスト環境専用です
 - 本番環境では実際のユーザーがアップロードした画像を使用してください
 - 画像の詳細な管理方針については`storage/README.md`を参照してください
+
+## ウォーターマーク画像機能
+
+### JWTを使用した認証とアクセス
+
+```bash
+# JWTトークンの取得
+ACCESS_TOKEN=$(curl -s -X POST 'http://localhost:54411/auth/v1/token?grant_type=password' \
+  -H "apikey: $(supabase status --output json | jq -r '.api.anon_key')" \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user1@kater.jp","password":"password123"}' | jq -r '.access_token')
+
+# ウォーターマーク画像機能へのアクセス
+curl -H "Authorization: Bearer $ACCESS_TOKEN" http://localhost:54411/functions/v1/watermark-image/0287da2f-4058-891c-787e-7d68a7346ee8
+```
+
+> Note: 上記のコマンドはローカル開発環境用です。本番環境では適切なURLとAPIキーを使用してください。

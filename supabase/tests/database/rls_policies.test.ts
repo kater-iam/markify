@@ -60,6 +60,8 @@ describe('RLS Policies Tests', () => {
       .insert({
         profile_id: testProfileId,
         file_path: '/test/image.jpg',
+        original_filename: 'image.jpg',
+        name: 'Test Image',
         width: 100,
         height: 100
       })
@@ -117,13 +119,65 @@ describe('RLS Policies Tests', () => {
   });
 
   describe('images テーブル', () => {
-    it('一般ユーザーは自身の画像のみ参照できる', async () => {
+    it('一般ユーザーは全ての画像を参照できる', async () => {
+      // 別のユーザーを作成
+      const otherEmail = `other-test-${Date.now()}@example.com`;
+      const { data: otherAuthUser, error: otherAuthError } = await adminClient.auth.admin.createUser({
+        email: otherEmail,
+        password: 'testpassword123',
+        email_confirm: true
+      });
+      if (otherAuthError) throw otherAuthError;
+
+      // 別のプロファイルの画像を作成
+      const { data: otherProfile, error: otherProfileError } = await adminClient
+        .from('profiles')
+        .insert({
+          user_id: otherAuthUser.user.id,
+          code: `other${Date.now()}`,
+          first_name: 'Other',
+          last_name: 'User',
+          role: 'general'
+        })
+        .select()
+        .single();
+      if (otherProfileError) throw otherProfileError;
+
+      const { data: otherImage, error: otherImageError } = await adminClient
+        .from('images')
+        .insert({
+          profile_id: otherProfile.id,
+          file_path: '/test/other-image.jpg',
+          original_filename: 'other-image.jpg',
+          name: 'Other Image',
+          width: 200,
+          height: 200
+        })
+        .select()
+        .single();
+      if (otherImageError) throw otherImageError;
+
+      // 一般ユーザーで全ての画像を取得
       const { data, error } = await generalUserClient
         .from('images')
         .select('*');
+      
+      console.log('Retrieved images:', data); // デバッグ用のログ
+      console.log('Test profile ID:', testProfileId); // デバッグ用のログ
+      console.log('Other profile ID:', otherProfile.id); // デバッグ用のログ
+      
       expect(error).toBeNull();
       expect(data).not.toBeNull();
-      expect(data!.every(img => img.profile_id === testProfileId)).toBe(true);
+      expect(data!.length).toBeGreaterThan(1); // 少なくとも2つの画像があるはず
+      
+      // 自分の画像と他のユーザーの画像の両方が取得できることを確認
+      expect(data!.some(img => img.profile_id === testProfileId)).toBe(true);
+      expect(data!.some(img => img.profile_id === otherProfile.id)).toBe(true);
+
+      // テストデータのクリーンアップ
+      await adminClient.from('images').delete().eq('id', otherImage.id);
+      await adminClient.from('profiles').delete().eq('id', otherProfile.id);
+      await adminClient.auth.admin.deleteUser(otherAuthUser.user.id);
     });
 
     it('一般ユーザーは画像を作成できない', async () => {
@@ -132,6 +186,8 @@ describe('RLS Policies Tests', () => {
         .insert({
           profile_id: testProfileId,
           file_path: '/test/image2.jpg',
+          original_filename: 'image2.jpg',
+          name: 'Test Image 2',
           width: 200,
           height: 200
         });
