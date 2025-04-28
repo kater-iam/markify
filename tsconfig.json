@@ -6,8 +6,17 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
-    "outDir": "dist"
+    "outDir": "dist",
+    "rootDir": ".",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["*"]
+    }
   },
-  "include": ["tests/**/*"],
-  "exclude": ["node_modules"]
+  "include": [
+    "supabase/scripts/**/*",
+    "tests/**/*",
+    "types/**/*"
+  ],
+  "exclude": ["node_modules", "dist"]
 } 
