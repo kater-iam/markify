@@ -197,3 +197,19 @@ SELECT
   now() - interval '1 day' * (random() * 30)::integer
 FROM public.images i
 CROSS JOIN generate_series(1, 5) AS log(j);
+
+-- ウォーターマーク設定の追加
+insert into public.settings (key, value, description)
+values (
+    'watermark',
+    '{
+        "text": "© YOUR BRAND",
+        "fontSizeRel": 0.1,
+        "opacity": 0.25,
+        "angle": -45
+    }'::jsonb,
+    'ウォーターマーク設定（text: 透かし文字列, fontSizeRel: 画像辺に対する割合(0-1), opacity: 透明度(0-1), angle: 角度(deg)）'
+)
+on conflict (key) do update
+set value = excluded.value,
+    description = excluded.description;
