@@ -21,3 +21,4 @@ alwaysApply: false
 
 9. Dockerイメージは新規取得後、古いイメージを確認して削除すること。
 
+10. psql コマンドを使う際には psql  "$(supabase status --output json | jq -r '.DB_URL') を使う。
