@@ -1,6 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import sharp from 'sharp'
+import { Buffer } from 'node:buffer'
 
 const STORAGE_DIR = path.join(process.cwd(), '../storage')
 
@@ -162,40 +163,41 @@ async function generateImage(
 }
 
 async function main() {
-  // ディレクトリの作成
-  const categories = ['documents', 'photos', 'charts']
-  for (const category of categories) {
-    const dir = path.join(STORAGE_DIR, category)
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true })
-    }
+  // ストレージディレクトリの作成（サブディレクトリなし）
+  if (!fs.existsSync(STORAGE_DIR)) {
+    fs.mkdirSync(STORAGE_DIR, { recursive: true })
   }
+
+  let globalIndex = 1;
 
   // ドキュメント画像の生成
   const documentTypes = ['handwritten', 'typewriter', 'printed', 'mixed']
   for (let i = 1; i <= 80; i++) {
     const type = documentTypes[(i - 1) % 4]
-    const filename = `${type}_${String(i).padStart(3, '0')}.jpg`
-    await generateImage(type, 'documents', i, path.join(STORAGE_DIR, 'documents', filename))
-    console.log(`Generated document: ${filename}`)
+    const filename = `${String(globalIndex).padStart(3, '0')}_${type}.jpg`
+    await generateImage(type, 'documents', i, path.join(STORAGE_DIR, filename))
+    console.log(`Generated image: ${filename}`)
+    globalIndex++;
   }
 
   // 写真の生成
   const photoTypes = ['landscape', 'portrait', 'product', 'architecture']
   for (let i = 1; i <= 80; i++) {
     const type = photoTypes[(i - 1) % 4]
-    const filename = `${type}_${String(i).padStart(3, '0')}.jpg`
-    await generateImage(type, 'photos', i, path.join(STORAGE_DIR, 'photos', filename))
-    console.log(`Generated photo: ${filename}`)
+    const filename = `${String(globalIndex).padStart(3, '0')}_${type}.jpg`
+    await generateImage(type, 'photos', i, path.join(STORAGE_DIR, filename))
+    console.log(`Generated image: ${filename}`)
+    globalIndex++;
   }
 
   // チャート画像の生成
   const chartTypes = ['chart', 'graph', 'diagram', 'table']
   for (let i = 1; i <= 40; i++) {
     const type = chartTypes[(i - 1) % 4]
-    const filename = `${type}_${String(i).padStart(3, '0')}.jpg`
-    await generateImage(type, 'charts', i, path.join(STORAGE_DIR, 'charts', filename))
-    console.log(`Generated chart: ${filename}`)
+    const filename = `${String(globalIndex).padStart(3, '0')}_${type}.jpg`
+    await generateImage(type, 'charts', i, path.join(STORAGE_DIR, filename))
+    console.log(`Generated image: ${filename}`)
+    globalIndex++;
   }
 }
 

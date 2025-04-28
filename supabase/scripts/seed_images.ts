@@ -5,6 +5,7 @@ import * as dotenv from 'dotenv';
 import { fileURLToPath } from 'node:url';
 import * as process from 'node:process';
 import sharp from 'sharp';
+import { exit } from "node:process";
 
 dotenv.config();
 
@@ -12,7 +13,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // 画像ディレクトリのパス
-const STORAGE_DIR = path.join(__dirname, '..', 'storage');
+const STORAGE_DIR = path.join(__dirname, '../../', 'storage');
 
 // ローカル環境のデフォルト値
 const DEFAULT_SUPABASE_URL = 'http://127.0.0.1:54411';
@@ -57,24 +58,25 @@ async function uploadImagesInDirectory(supabase: any, directory: string) {
         console.error(`Failed to upload ${file}:`, uploadError);
       } else {
         // 画像情報をDBに保存
-        const { data: publicUrlData } = supabase.storage.from('original_images').getPublicUrl(file);
+//        const { data: publicUrlData } = supabase.storage.from('original_images').getPublicUrl(file);
         
-        const { error: dbError } = await supabase
-          .from('images')
-          .insert({
-            profile_id: '00000000-0000-0000-0000-000000000001',
-            file_path: file,
-            original_filename: file,
-            name: file.split('.')[0],
-            width,
-            height
-          });
+        // const { error: dbError } = await supabase
+        //   .from('images')
+        //   .insert({
+        //     profile_id: '00000000-0000-0000-0000-000000000001',
+        //     file_path: file,
+        //     original_filename: file,
+        //     name: file.split('.')[0],
+        //     width,
+        //     height
+        //   });
+        // return;
 
-        if (dbError) {
-          console.error(`Failed to save image data to DB for ${file}:`, dbError);
-        } else {
-          console.log(`Successfully uploaded and saved ${file}`);
-        }
+        // if (dbError) {
+        //   console.error(`Failed to save image data to DB for ${file}:`, dbError);
+        // } else {
+        //   console.log(`Successfully uploaded and saved ${file}`);
+        // }
       }
     } catch (error) {
       console.error(`Error processing ${file}:`, error);
