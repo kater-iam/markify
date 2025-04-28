@@ -2,7 +2,7 @@ import fs from 'fs'
 import path from 'path'
 import sharp from 'sharp'
 
-const STORAGE_DIR = path.join(process.cwd(), 'storage')
+const STORAGE_DIR = path.join(process.cwd(), '../storage')
 
 // ドキュメント用のSVGテンプレート
 function generateDocumentSvg(
