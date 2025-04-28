@@ -1,19 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
-import * as fs from 'node:fs';
-import * as path from 'node:path';
+import * as fs from 'fs';
+import * as path from 'path';
 import * as dotenv from 'dotenv';
-import { fileURLToPath } from 'node:url';
-import * as process from 'node:process';
 import sharp from 'sharp';
-import { exit } from "node:process";
 
 dotenv.config();
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 // 画像ディレクトリのパス
-const STORAGE_DIR = path.join(__dirname, '../../', 'storage');
+const STORAGE_DIR = path.join(process.cwd(), 'storage/original_images');
 
 // ローカル環境のデフォルト値
 const DEFAULT_SUPABASE_URL = 'http://127.0.0.1:54411';
@@ -35,13 +29,14 @@ async function getImageMetadata(filePath: string) {
   }
 }
 
-async function uploadImagesInDirectory(supabase: any, directory: string) {
-  const files = fs.readdirSync(directory);
+async function uploadImages(supabase: any) {
+  const files = fs.readdirSync(STORAGE_DIR);
+  let uploadedCount = 0;
   
   for (const file of files) {
     if (!file.endsWith('.jpg')) continue;
     
-    const localPath = path.join(directory, file);
+    const localPath = path.join(STORAGE_DIR, file);
     
     try {
       const fileContent = fs.readFileSync(localPath);
@@ -56,32 +51,35 @@ async function uploadImagesInDirectory(supabase: any, directory: string) {
 
       if (uploadError) {
         console.error(`Failed to upload ${file}:`, uploadError);
-      } else {
-        // 画像情報をDBに保存
-//        const { data: publicUrlData } = supabase.storage.from('original_images').getPublicUrl(file);
-        
-        // const { error: dbError } = await supabase
-        //   .from('images')
-        //   .insert({
-        //     profile_id: '00000000-0000-0000-0000-000000000001',
-        //     file_path: file,
-        //     original_filename: file,
-        //     name: file.split('.')[0],
-        //     width,
-        //     height
-        //   });
-        // return;
+        continue;
+      }
 
-        // if (dbError) {
-        //   console.error(`Failed to save image data to DB for ${file}:`, dbError);
-        // } else {
-        //   console.log(`Successfully uploaded and saved ${file}`);
-        // }
+      // 画像情報をDBに保存
+      const { data: publicUrlData } = supabase.storage.from('original_images').getPublicUrl(file);
+      
+      const { error: dbError } = await supabase
+        .from('images')
+        .insert({
+          profile_id: '00000000-0000-0000-0000-000000000001',
+          file_path: file,
+          original_filename: file,
+          name: file.split('.')[0],
+          width,
+          height
+        });
+
+      if (dbError) {
+        console.error(`Failed to save image data to DB for ${file}:`, dbError);
+      } else {
+        uploadedCount++;
+        console.log(`Successfully uploaded and saved ${file} (${uploadedCount} of ${files.length})`);
       }
     } catch (error) {
       console.error(`Error processing ${file}:`, error);
     }
   }
+  
+  console.log(`Total images uploaded: ${uploadedCount}`);
 }
 
 async function main() {
@@ -119,18 +117,8 @@ async function main() {
   }
 
   try {
-    // 各カテゴリの画像をアップロード
-    const categories = ['documents', 'photos', 'charts'];
-    for (const category of categories) {
-      const categoryDir = path.join(STORAGE_DIR, category);
-      if (fs.existsSync(categoryDir)) {
-        console.log(`Uploading images from ${category} directory...`);
-        await uploadImagesInDirectory(supabase, categoryDir);
-      } else {
-        console.warn(`Directory not found: ${categoryDir}`);
-      }
-    }
-
+    console.log('Uploading images...');
+    await uploadImages(supabase);
     console.log('Seed images upload completed successfully');
   } catch (error) {
     console.error('Error during seed images upload:', error);
