@@ -1,3 +1,26 @@
+/**
+ * 画像ファイルをSupabaseのストレージとデータベースに登録するスクリプト
+ * 
+ * supabase/storage/original_images/ ディレクトリ内の画像ファイルを
+ * Supabaseのストレージにアップロードし、imagesテーブルにメタデータを登録します。
+ * 
+ * 必要な環境変数:
+ * - SUPABASE_URL: Supabaseのエンドポイント（デフォルト: http://127.0.0.1:54411）
+ * - SUPABASE_SERVICE_ROLE_KEY: サービスロールキー
+ * 
+ * 使用方法:
+ * ```bash
+ * cd supabase
+ * npx ts-node scripts/seed_images.ts
+ * ```
+ * 
+ * 処理内容:
+ * 1. original_imagesバケットの存在確認（なければ作成）
+ * 2. 画像ファイルのアップロード
+ * 3. 画像メタデータ（幅、高さ）の取得
+ * 4. imagesテーブルへのデータ登録
+ */
+
 import { createClient } from '@supabase/supabase-js';
 import * as fs from 'fs';
 import * as path from 'path';

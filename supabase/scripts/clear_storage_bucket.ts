@@ -1,3 +1,24 @@
+/**
+ * Supabaseのストレージバケットをクリアするスクリプト
+ * 
+ * 指定されたバケット内のすべてのファイルを削除します。
+ * デフォルトでは original_images バケットが対象となります。
+ * 
+ * 必要な環境変数:
+ * - SUPABASE_URL: Supabaseのエンドポイント（デフォルト: http://127.0.0.1:54411）
+ * - SUPABASE_SERVICE_ROLE_KEY: サービスロールキー
+ * 
+ * 使用方法:
+ * ```bash
+ * cd supabase
+ * npx ts-node scripts/clear_storage_bucket.ts [バケット名]
+ * ```
+ * 
+ * 注意:
+ * - このスクリプトは指定されたバケット内のすべてのファイルを削除します
+ * - 削除前に確認メッセージが表示されます
+ */
+
 import { createClient } from '@supabase/supabase-js';
 import * as dotenv from 'dotenv';
 import * as process from 'node:process';

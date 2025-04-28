@@ -1,3 +1,24 @@
+/**
+ * 画像ファイルの移動とリネームを行うスクリプト
+ * 
+ * storage/ ディレクトリ内のカテゴリ別フォルダ（documents, photos, charts）から
+ * 画像を取得し、supabase/storage/original_images/ ディレクトリに移動します。
+ * 
+ * ファイル名の形式を以下のように変更します：
+ * - 変更前: category_001.jpg
+ * - 変更後: 001_category.jpg
+ * 
+ * 使用方法:
+ * ```bash
+ * cd supabase
+ * npx ts-node scripts/move_and_rename_images.ts
+ * ```
+ * 
+ * 注意: 
+ * - 移動元のファイルはそのまま残ります
+ * - ファイル名の数字は重複しないように自動的に調整されます
+ */
+
 import fs from 'fs';
 import path from 'path';
 

@@ -1,3 +1,31 @@
+/**
+ * 開発環境用のテスト画像を生成するスクリプト
+ * 
+ * 以下の種類の画像を生成します：
+ * - ドキュメント画像（80枚）
+ *   - 手書き文書 (handwritten_*.jpg)
+ *   - タイプライター文書 (typewriter_*.jpg)
+ *   - 印刷文書 (printed_*.jpg)
+ *   - 混合文書 (mixed_*.jpg)
+ * - 写真画像（80枚）
+ *   - 風景写真 (landscape_*.jpg)
+ *   - ポートレート写真 (portrait_*.jpg)
+ *   - 商品写真 (product_*.jpg)
+ *   - 建築写真 (architecture_*.jpg)
+ * - チャート画像（40枚）
+ *   - チャート (chart_*.jpg)
+ *   - グラフ (graph_*.jpg)
+ *   - ダイアグラム (diagram_*.jpg)
+ *   - 表 (table_*.jpg)
+ * 
+ * 使用方法:
+ * ```bash
+ * npx ts-node scripts/generate_seed_images.ts
+ * ```
+ * 
+ * 生成された画像は storage/ ディレクトリ内のカテゴリごとのフォルダに保存されます。
+ */
+
 import fs from 'fs'
 import path from 'path'
 import sharp from 'sharp'
