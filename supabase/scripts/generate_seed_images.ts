@@ -1,8 +1,37 @@
+/**
+ * 開発環境用のテスト画像を生成するスクリプト
+ * 
+ * 以下の種類の画像を生成します：
+ * - ドキュメント画像（80枚）
+ *   - 手書き文書 (handwritten_*.jpg)
+ *   - タイプライター文書 (typewriter_*.jpg)
+ *   - 印刷文書 (printed_*.jpg)
+ *   - 混合文書 (mixed_*.jpg)
+ * - 写真画像（80枚）
+ *   - 風景写真 (landscape_*.jpg)
+ *   - ポートレート写真 (portrait_*.jpg)
+ *   - 商品写真 (product_*.jpg)
+ *   - 建築写真 (architecture_*.jpg)
+ * - チャート画像（40枚）
+ *   - チャート (chart_*.jpg)
+ *   - グラフ (graph_*.jpg)
+ *   - ダイアグラム (diagram_*.jpg)
+ *   - 表 (table_*.jpg)
+ * 
+ * 使用方法:
+ * ```bash
+ * npx ts-node scripts/generate_seed_images.ts
+ * ```
+ * 
+ * 生成された画像は storage/ ディレクトリ内のカテゴリごとのフォルダに保存されます。
+ */
+
 import fs from 'fs'
 import path from 'path'
 import sharp from 'sharp'
+import { Buffer } from 'node:buffer'
 
-const STORAGE_DIR = path.join(process.cwd(), 'storage')
+const STORAGE_DIR = path.join(process.cwd(), '../storage')
 
 // ドキュメント用のSVGテンプレート
 function generateDocumentSvg(
@@ -162,40 +191,41 @@ async function generateImage(
 }
 
 async function main() {
-  // ディレクトリの作成
-  const categories = ['documents', 'photos', 'charts']
-  for (const category of categories) {
-    const dir = path.join(STORAGE_DIR, category)
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true })
-    }
+  // ストレージディレクトリの作成（サブディレクトリなし）
+  if (!fs.existsSync(STORAGE_DIR)) {
+    fs.mkdirSync(STORAGE_DIR, { recursive: true })
   }
+
+  let globalIndex = 1;
 
   // ドキュメント画像の生成
   const documentTypes = ['handwritten', 'typewriter', 'printed', 'mixed']
   for (let i = 1; i <= 80; i++) {
     const type = documentTypes[(i - 1) % 4]
-    const filename = `${type}_${String(i).padStart(3, '0')}.jpg`
-    await generateImage(type, 'documents', i, path.join(STORAGE_DIR, 'documents', filename))
-    console.log(`Generated document: ${filename}`)
+    const filename = `${String(globalIndex).padStart(3, '0')}_${type}.jpg`
+    await generateImage(type, 'documents', i, path.join(STORAGE_DIR, filename))
+    console.log(`Generated image: ${filename}`)
+    globalIndex++;
   }
 
   // 写真の生成
   const photoTypes = ['landscape', 'portrait', 'product', 'architecture']
   for (let i = 1; i <= 80; i++) {
     const type = photoTypes[(i - 1) % 4]
-    const filename = `${type}_${String(i).padStart(3, '0')}.jpg`
-    await generateImage(type, 'photos', i, path.join(STORAGE_DIR, 'photos', filename))
-    console.log(`Generated photo: ${filename}`)
+    const filename = `${String(globalIndex).padStart(3, '0')}_${type}.jpg`
+    await generateImage(type, 'photos', i, path.join(STORAGE_DIR, filename))
+    console.log(`Generated image: ${filename}`)
+    globalIndex++;
   }
 
   // チャート画像の生成
   const chartTypes = ['chart', 'graph', 'diagram', 'table']
   for (let i = 1; i <= 40; i++) {
     const type = chartTypes[(i - 1) % 4]
-    const filename = `${type}_${String(i).padStart(3, '0')}.jpg`
-    await generateImage(type, 'charts', i, path.join(STORAGE_DIR, 'charts', filename))
-    console.log(`Generated chart: ${filename}`)
+    const filename = `${String(globalIndex).padStart(3, '0')}_${type}.jpg`
+    await generateImage(type, 'charts', i, path.join(STORAGE_DIR, filename))
+    console.log(`Generated image: ${filename}`)
+    globalIndex++;
   }
 }
 

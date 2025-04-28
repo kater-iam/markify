@@ -1,6 +1,5 @@
 import { serve } from 'https://deno.land/std@0.208.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { Console } from "node:console";
 // deno run -A functions/watermark/index.ts でローカルテスト可
 import {
   createCanvas,

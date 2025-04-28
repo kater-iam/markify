@@ -126,3 +126,80 @@ curl -H "Authorization: Bearer $ACCESS_TOKEN" http://localhost:54411/functions/v
 ```
 
 > Note: 上記のコマンドはローカル開発環境用です。本番環境では適切なURLとAPIキーを使用してください。
+
+## スクリプト一覧
+
+`scripts/` ディレクトリには以下のユーティリティスクリプトが用意されています：
+
+### 画像生成・管理スクリプト
+
+1. **generate_seed_images.ts**
+   - 開発環境用のテスト画像を生成
+   - 生成される画像：ドキュメント(80枚)、写真(80枚)、チャート(40枚)
+   ```bash
+   npx ts-node scripts/generate_seed_images.ts
+   ```
+
+2. **move_and_rename_images.ts**
+   - 画像ファイルの移動とリネーム
+   - `storage/` 内のカテゴリ別フォルダから `supabase/storage/original_images/` へ移動
+   ```bash
+   cd supabase
+   npx ts-node scripts/move_and_rename_images.ts
+   ```
+
+3. **seed_images.ts**
+   - 画像ファイルをSupabaseのストレージとDBに登録
+   - `supabase/storage/original_images/` 内の画像を処理
+   ```bash
+   cd supabase
+   npx ts-node scripts/seed_images.ts
+   ```
+
+4. **clear_storage_bucket.ts**
+   - Supabaseのストレージバケットをクリア
+   - デフォルトで `original_images` バケットを対象
+   ```bash
+   cd supabase
+   npx ts-node scripts/clear_storage_bucket.ts [バケット名]
+   ```
+
+### シェルスクリプト
+
+1. **re_seed_images.sh**
+   - 画像の再シード処理を一括実行
+   - バケットのクリア、画像の生成、移動、アップロードを順次実行
+   ```bash
+   cd supabase
+   ./scripts/re_seed_images.sh
+   ```
+
+2. **restart_serve_function_and_test_watermark.sh**
+   - ウォーターマーク機能のテスト用スクリプト
+   - 関数の再起動とテストを実行
+   ```bash
+   cd supabase
+   ./scripts/restart_serve_function_and_test_watermark.sh
+   ```
+
+### 画像処理の一括実行
+
+開発環境で画像データを初期化する場合は、以下の手順で実行できます：
+
+```bash
+cd supabase
+# 1. バケットをクリア
+npx ts-node scripts/clear_storage_bucket.ts
+
+# 2. テスト画像を生成
+npx ts-node scripts/generate_seed_images.ts
+
+# 3. 画像を移動・リネーム
+npx ts-node scripts/move_and_rename_images.ts
+
+# 4. Supabaseに登録
+npx ts-node scripts/seed_images.ts
+
+# または、一括実行スクリプトを使用
+./scripts/re_seed_images.sh
+```
