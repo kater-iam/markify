@@ -1,10 +1,13 @@
 {
   "name": "markify-supabase",
   "version": "1.0.0",
-  "type": "commonjs",
   "scripts": {
-    "seed:images": "tsx seed_images.ts",
-    "test": "jest"
+    "seed:images": "tsx supabase/scripts/seed_images.ts",
+    "clear:storage": "tsx supabase/scripts/clear_storage_bucket.ts",
+    "move:images": "tsx supabase/scripts/move_and_rename_images.ts",
+    "test": "jest",
+    "type-check": "tsc --noEmit",
+    "build": "tsc"
   },
   "dependencies": {
     "axios": "^1.8.4",
