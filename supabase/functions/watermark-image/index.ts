@@ -173,6 +173,24 @@ serve(async (req: Request) => {
 
     debug.log('User authenticated:', user?.email)
 
+    // ユーザーのプロファイル情報を取得
+    debug.log('Fetching user profile...')
+    const { data: profile, error: profileError } = await supabaseClient
+      .from('profiles')
+      .select('code')
+      .eq('user_id', user.id)
+      .single()
+
+    if (profileError) {
+      debug.error('Profile fetch error:', profileError)
+      return new Response(
+        JSON.stringify({ error: 'Profile not found' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    debug.log('User profile retrieved:', profile)
+
     // 2. 画像情報の取得
     debug.log('Fetching image data...')
     const { data: imageData, error: dbError } = await supabaseClient
@@ -227,7 +245,7 @@ serve(async (req: Request) => {
     
     debug.log('Processing image with watermark...');
     const processedImage = await addWatermark(arrayBuffer, {
-      text: '© YOUR BRAND', // TODO: 設定から取得
+      text: profile.code, // ユーザーのcodeを透かし文字として使用
     })
     debug.log('Image processed successfully');
 
