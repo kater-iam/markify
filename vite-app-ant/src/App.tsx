@@ -76,8 +76,9 @@ function App() {
                     name: "settings",
                     meta: {
                       label: "設定",
-                      icon: "SettingOutlined",
+                      icon: <SettingOutlined />,
                     },
+                    list: "/settings/watermark",
                   },
                 ]}
                 options={{
@@ -137,8 +138,9 @@ function App() {
                       <Route path="show/:id" element={<DownloadLogsShow />} />
                     </Route>
                     <Route path="/settings">
-                    <Route path="watermark" element={<WatermarkSettings />} />
-                    <Route path="gemini-api" element={<GeminiApiSettings />} />
+                      <Route index element={<Navigate to="/settings/watermark" />} />
+                      <Route path="watermark" element={<WatermarkSettings />} />
+                      <Route path="gemini-api" element={<GeminiApiSettings />} />
                     </Route>
                     <Route path="/" element={<Navigate to="/images" />} />
                   </Route>
