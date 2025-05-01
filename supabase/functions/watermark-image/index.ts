@@ -7,17 +7,11 @@ import {
 } from "https://deno.land/x/canvas@v1.4.2/mod.ts";
 import { encode as base64Encode } from "https://deno.land/std@0.208.0/encoding/base64.ts";
 import { handleError, debug } from '../_shared/utils.ts';
+import { addWatermark, type WatermarkOptions } from '../_shared/image-processing.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
-
-interface WatermarkOptions {
-  text: string;            // 透かし文字列
-  fontSizeRel?: number;    // 画像辺に対する割合 (0-1) 既定 0.1
-  opacity?: number;        // 0-1 既定 0.25
-  angle?: number;          // deg 既定 -45
 }
 
 interface ImageData {
@@ -30,7 +24,7 @@ interface ImageData {
 /* ---------- 透かし処理本体 ---------- */
 export async function addWatermark(
   buf: ArrayBuffer,
-  opt: WatermarkOptions = { text: "© YOUR BRAND" },
+  opt: WatermarkOptions = { text: "© YOUR BRAND", color: '#FFFFFF' },
   format: "jpeg" | "png" | "webp" = "jpeg",
   quality = 0.82,
 ): Promise<Uint8Array> {
@@ -191,6 +185,37 @@ serve(async (req: Request) => {
 
     debug.log('User profile retrieved:', profile)
 
+    // ServiceRoleを使ったadminClientを作成（Storageやwatermarkオプションへのアクセス）
+    debug.log('Initializing admin client...');
+    const serviceRoleClient = createClient(
+      supabaseUrl ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+    );
+    debug.log('Admin client initialized');
+
+
+    // watermark設定の取得
+    debug.log('Fetching watermark settings...')
+    const { data: settings, error: settingsError } = await serviceRoleClient
+      .from('settings')
+      .select('value')
+      .eq('key', 'watermark')
+      .single()
+
+    if (settingsError) {
+      debug.error('Settings fetch error:', settingsError)
+      // 設定が見つからない場合はデフォルト値を使用
+      debug.log('Using default watermark settings')
+    }
+
+    const watermarkSettings = settings?.value || {
+      opacity: 0.25,
+      fontSize: 11,  // デフォルトは11px
+      color: '#FFFFFF' // デフォルトは白
+    }
+
+    debug.log('Watermark settings:', watermarkSettings)
+
     // 2. 画像情報の取得
     debug.log('Fetching image data...')
     const { data: imageData, error: dbError } = await supabaseClient
@@ -215,15 +240,8 @@ serve(async (req: Request) => {
     debug.log('Image data retrieved:', imageData)
 
     // 3. ストレージからの画像取得
-    debug.log('Initializing admin client...');
-    const adminClient = createClient(
-      supabaseUrl ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-    );
-    debug.log('Admin client initialized');
-
     debug.log('Downloading image from storage...')
-    const { data: imageFile, error: storageError } = await adminClient
+    const { data: imageFile, error: storageError } = await serviceRoleClient
       .storage
       .from('original_images')
       .download(`${imageData.file_path}`)
@@ -245,7 +263,10 @@ serve(async (req: Request) => {
     
     debug.log('Processing image with watermark...');
     const processedImage = await addWatermark(arrayBuffer, {
-      text: profile.code, // ユーザーのcodeを透かし文字として使用
+      text: profile.code,
+      opacity: watermarkSettings.opacity,
+      fontSize: watermarkSettings.fontSize,
+      color: watermarkSettings.color
     })
     debug.log('Image processed successfully');
 
