@@ -15,8 +15,10 @@
   },
   "devDependencies": {
     "@supabase/supabase-js": "^2.49.4",
+    "@types/antd": "^1.0.4",
     "@types/jest": "^29.5.12",
     "@types/node": "^20.11.30",
+    "@types/react": "^19.1.2",
     "@types/sharp": "^0.32.0",
     "dotenv": "^16.4.5",
     "jest": "^29.7.0",
