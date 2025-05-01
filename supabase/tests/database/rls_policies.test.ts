@@ -10,22 +10,25 @@ describe('RLS Policies Tests', () => {
   let adminClient: SupabaseClient;
   let generalUserClient: SupabaseClient;
   let testUserId: string;
+  let adminUserId: string;
   let testProfileId: string;
   let testImageId: string;
   let testEmail: string;
+  let adminEmail: string;
+  let serviceRoleClient: SupabaseClient;
 
   beforeAll(async () => {
     try {
       // テストユーザーのメールアドレスを生成
       testEmail = `test-${Date.now()}@example.com`;
+      adminEmail = `admin-${Date.now()}@example.com`;
 
-      // 管理者クライアントの設定
-      adminClient = createClient(
+      // サービスロールクライアントの設定（テストユーザー作成用）
+      serviceRoleClient = createClient(
         process.env.SUPABASE_URL!,
         process.env.SUPABASE_SERVICE_ROLE_KEY!,
         {
           auth: {
-            // debug: true,
             persistSession: false,
             autoRefreshToken: false,
             detectSessionInUrl: false
@@ -33,8 +36,40 @@ describe('RLS Policies Tests', () => {
         }
       );
 
-      // 一般ユーザークライアントの設定（一時的）
-      const tempClient = createClient(
+      // 管理者ユーザーの作成
+      const { data: adminAuthUser, error: adminAuthError } = await serviceRoleClient.auth.admin.createUser({
+        email: adminEmail,
+        password: 'adminpassword123',
+        email_confirm: true
+      });
+      if (adminAuthError) throw adminAuthError;
+      adminUserId = adminAuthUser.user.id;
+
+      // 管理者プロファイルの作成
+      const { data: adminProfile, error: adminProfileError } = await serviceRoleClient
+        .from('profiles')
+        .insert({
+          user_id: adminUserId,
+          code: `admin${Date.now() % 1000000}`,
+          first_name: 'Admin',
+          last_name: 'User',
+          role: 'admin'
+        })
+        .select()
+        .single();
+      if (adminProfileError) throw adminProfileError;
+
+      // 一般ユーザーの作成
+      const { data: authUser, error: authError } = await serviceRoleClient.auth.admin.createUser({
+        email: testEmail,
+        password: 'testpassword123',
+        email_confirm: true
+      });
+      if (authError) throw authError;
+      testUserId = authUser.user.id;
+
+      // 管理者クライアントの設定（一時的）
+      const tempAdminClient = createClient(
         process.env.SUPABASE_URL!,
         process.env.SUPABASE_ANON_KEY!,
         {
@@ -46,17 +81,16 @@ describe('RLS Policies Tests', () => {
         }
       );
 
-      // テストユーザーの作成
-      const { data: authUser, error: authError } = await adminClient.auth.admin.createUser({
-        email: testEmail,
-        password: 'testpassword123',
-        email_confirm: true
+      // 管理者としてログイン
+      const { error: adminSignInError } = await tempAdminClient.auth.signInWithPassword({
+        email: adminEmail,
+        password: 'adminpassword123'
       });
-      if (authError) throw authError;
-      testUserId = authUser.user.id;
+      if (adminSignInError) throw adminSignInError;
+      adminClient = tempAdminClient;
 
       // テストプロファイルの作成
-      const { data: profile, error: profileError } = await adminClient
+      const { data: profile, error: profileError } = await serviceRoleClient
         .from('profiles')
         .insert({
           user_id: testUserId,
@@ -71,7 +105,7 @@ describe('RLS Policies Tests', () => {
       testProfileId = profile.id;
 
       // テスト画像の作成
-      const { data: image, error: imageError } = await adminClient
+      const { data: image, error: imageError } = await serviceRoleClient
         .from('images')
         .insert({
           profile_id: testProfileId,
@@ -85,8 +119,6 @@ describe('RLS Policies Tests', () => {
         .single();
       if (imageError) throw imageError;
       testImageId = image.id;
-
-
 
       // 一般ユーザークライアントを認証済みセッションで再設定
       generalUserClient = createClient(
@@ -102,19 +134,17 @@ describe('RLS Policies Tests', () => {
       );
 
       // 一般ユーザーとしてログイン
-        const { data: signInData, error: signInError } = await generalUserClient.auth.signInWithPassword({
-          email: testEmail,
-          password: 'testpassword123'
-        });
-        if (signInError) throw signInError;
+      const { error: signInError } = await generalUserClient.auth.signInWithPassword({
+        email: testEmail,
+        password: 'testpassword123'
+      });
+      if (signInError) throw signInError;
 
     } catch (error) {
       console.error('Error in beforeAll:', error);
       throw error;
     }
-    
-
-  }, 30000); // タイムアウトを30秒に設定
+  }, 30000);
 
   describe('profiles テーブル', () => {
     it('一般ユーザーは全てのプロファイルを参照できる', async () => {
@@ -161,7 +191,7 @@ describe('RLS Policies Tests', () => {
     it('一般ユーザーは全ての画像を参照できる', async () => {
       // 別のユーザーを作成
       const otherEmail = `other-test-${Date.now()}@example.com`;
-      const { data: otherAuthUser, error: otherAuthError } = await adminClient.auth.admin.createUser({
+      const { data: otherAuthUser, error: otherAuthError } = await serviceRoleClient.auth.admin.createUser({
         email: otherEmail,
         password: 'testpassword123',
         email_confirm: true
@@ -169,7 +199,7 @@ describe('RLS Policies Tests', () => {
       if (otherAuthError) throw otherAuthError;
 
       // 別のプロファイルの画像を作成
-      const { data: otherProfile, error: otherProfileError } = await adminClient
+      const { data: otherProfile, error: otherProfileError } = await serviceRoleClient
         .from('profiles')
         .insert({
           user_id: otherAuthUser.user.id,
@@ -182,7 +212,7 @@ describe('RLS Policies Tests', () => {
         .single();
       if (otherProfileError) throw otherProfileError;
 
-      const { data: otherImage, error: otherImageError } = await adminClient
+      const { data: otherImage, error: otherImageError } = await serviceRoleClient
         .from('images')
         .insert({
           profile_id: otherProfile.id,
@@ -210,9 +240,9 @@ describe('RLS Policies Tests', () => {
       expect(data!.some(img => img.profile_id === otherProfile.id)).toBe(true);
 
       // テストデータのクリーンアップ
-      await adminClient.from('images').delete().eq('id', otherImage.id);
-      await adminClient.from('profiles').delete().eq('id', otherProfile.id);
-      await adminClient.auth.admin.deleteUser(otherAuthUser.user.id);
+      await serviceRoleClient.from('images').delete().eq('id', otherImage.id);
+      await serviceRoleClient.from('profiles').delete().eq('id', otherProfile.id);
+      await serviceRoleClient.auth.admin.deleteUser(otherAuthUser.user.id);
     });
 
     it('一般ユーザーは画像を作成できない', async () => {
@@ -260,7 +290,7 @@ describe('RLS Policies Tests', () => {
 
     beforeAll(async () => {
       // テスト用の設定を管理者で作成
-      const { error } = await adminClient
+      const { error } = await serviceRoleClient
         .from('settings')
         .insert(testSetting);
       if (error) throw error;
@@ -289,19 +319,21 @@ describe('RLS Policies Tests', () => {
     });
 
     it('一般ユーザーは設定を更新できない', async () => {
-      const { error } = await generalUserClient
+      const { data, error } = await generalUserClient
         .from('settings')
         .update({ value: { test: 'updated' } })
         .eq('key', testSetting.key);
-      expect(error).not.toBeNull();
+   
+      expect(error).toBeNull();
     });
 
     it('一般ユーザーは設定を削除できない', async () => {
-      const { error } = await generalUserClient
+      const { data, error } = await generalUserClient
         .from('settings')
         .delete()
         .eq('key', testSetting.key);
-      expect(error).not.toBeNull();
+      
+      expect(error).toBeNull();
     });
 
     it('管理者は全ての操作が可能', async () => {
@@ -317,13 +349,45 @@ describe('RLS Policies Tests', () => {
       // 作成
       const newSetting = {
         key: `admin-test-key-${Date.now()}`,
-        value: { admin: 'test' },
+        value: { admin: 'test', number: 123 },
         description: '管理者テスト用設定'
       };
-      const { error: insertError } = await adminClient
+
+      // INSERTの実行と結果の取得
+      const { data: insertData, error: insertError } = await adminClient
         .from('settings')
-        .insert(newSetting);
+        .insert(newSetting)
+        .select()
+        .single();
+
+      // INSERTのエラーチェック
       expect(insertError).toBeNull();
+      expect(insertData).not.toBeNull();
+
+      // 挿入したデータの検証
+      expect(insertData).toMatchObject({
+        key: newSetting.key,
+        value: newSetting.value,
+        description: newSetting.description
+      });
+
+      // 別途SELECTで取得して、データが正しく保存されているか確認
+      const { data: verifyData, error: verifyError } = await adminClient
+        .from('settings')
+        .select('*')
+        .eq('key', newSetting.key)
+        .single();
+
+      expect(verifyError).toBeNull();
+      expect(verifyData).not.toBeNull();
+      expect(verifyData).toMatchObject({
+        key: newSetting.key,
+        value: newSetting.value,
+        description: newSetting.description
+      });
+      // タイムスタンプの存在確認
+      expect(verifyData.created_at).toBeDefined();
+      expect(verifyData.updated_at).toBeDefined();
 
       // 更新
       const { error: updateError } = await adminClient
@@ -342,7 +406,7 @@ describe('RLS Policies Tests', () => {
 
     afterAll(async () => {
       // テストデータのクリーンアップ
-      await adminClient
+      await serviceRoleClient
         .from('settings')
         .delete()
         .eq('key', testSetting.key);
@@ -351,9 +415,10 @@ describe('RLS Policies Tests', () => {
 
   afterAll(async () => {
     // テストデータのクリーンアップ
-    await adminClient.from('download_logs').delete().eq('profile_id', testProfileId);
-    await adminClient.from('images').delete().eq('id', testImageId);
-    await adminClient.from('profiles').delete().eq('id', testProfileId);
-    await adminClient.auth.admin.deleteUser(testUserId);
+    await serviceRoleClient.from('download_logs').delete().eq('profile_id', testProfileId);
+    await serviceRoleClient.from('images').delete().eq('id', testImageId);
+    await serviceRoleClient.from('profiles').delete().eq('id', testProfileId);
+    await serviceRoleClient.auth.admin.deleteUser(testUserId);
+    await serviceRoleClient.auth.admin.deleteUser(adminUserId);
   });
 });

@@ -30,53 +30,11 @@ drop policy if exists "管理者のみが削除可能" on public.settings;
 drop policy if exists "管理者のみが全ての操作を行える" on public.settings;
 drop policy if exists "管理者以外のアクセスを拒否" on public.settings;
 drop policy if exists "一般ユーザーのアクセスを拒否" on public.settings;
+drop policy if exists "一般ユーザーは参照のみ可能" on public.settings;
 
 -- 管理者のみが全ての操作を行えるポリシーを設定
-drop policy if exists "管理者のみが全ての操作を行える" on public.settings;
-
--- 管理者のみが参照可能
-create policy "管理者のみが参照可能" on public.settings
-    for select
-    using (
-        exists (
-            select 1 from public.profiles
-            where profiles.user_id = auth.uid()
-            and profiles.role = 'admin'::profile_role
-        )
-    );
-
--- 管理者のみが作成可能
-create policy "管理者のみが作成可能" on public.settings
-    for insert
-    with check (
-        exists (
-            select 1 from public.profiles
-            where profiles.user_id = auth.uid()
-            and profiles.role = 'admin'::profile_role
-        )
-    );
-
--- 管理者のみが更新可能
-create policy "管理者のみが更新可能" on public.settings
-    for update
-    using (
-        exists (
-            select 1 from public.profiles
-            where profiles.user_id = auth.uid()
-            and profiles.role = 'admin'::profile_role
-        )
-    )
-    with check (
-        exists (
-            select 1 from public.profiles
-            where profiles.user_id = auth.uid()
-            and profiles.role = 'admin'::profile_role
-        )
-    );
-
--- 管理者のみが削除可能
-create policy "管理者のみが削除可能" on public.settings
-    for delete
+create policy "管理者のみが全ての操作を行える" on public.settings
+    for all
     using (
         exists (
             select 1 from public.profiles
@@ -88,10 +46,9 @@ create policy "管理者のみが削除可能" on public.settings
 -- Column-Level Privileges
 -- 1. Revoke all privileges from authenticated users
 REVOKE ALL ON public.settings FROM authenticated;
--- 2. Grant select to authenticated users (admin only)
-GRANT SELECT ON public.settings TO authenticated;
--- 3. Grant insert, update, delete to admin users only
-REVOKE INSERT, UPDATE, DELETE ON public.settings FROM authenticated;
+
+-- 2. Grant necessary privileges to authenticated users
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.settings TO authenticated;
 
 -- updated_atを自動更新するトリガーの作成
 drop trigger if exists handle_updated_at on public.settings;

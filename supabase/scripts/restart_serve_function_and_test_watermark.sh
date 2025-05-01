@@ -3,13 +3,15 @@
 
 set +x
 cd $(dirname $0)
-cd ../
+cd ../../
 
 # 出力ディレクトリの作成
 mkdir -p tmp
 
 # 再起動
-pkill -f "supabase functions serve" ; supabase functions serve > supabase/functions.log 2>&1 & sleep 3
+pkill -f "supabase functions serve" ; supabase functions serve > supabase/functions.log 2>&1 &
+
+sleep 2
 
 # JWTの取得
 USER=user1@kater.jp PASSWORD=password123
@@ -21,7 +23,7 @@ ACCESS_TOKEN=$(curl -s -X POST $(supabase status --output json | jq -r '.API_URL
 # 関数を叩く
 echo "画像処理を実行中..."
 curl -s -H "Authorization: Bearer $ACCESS_TOKEN" \
-  http://localhost:54411/functions/v1/watermark-image/354b4968-a716-414a-a938-ec6ab26500c3 \
+  http://localhost:54411/functions/v1/watermark-image/aa4d0bed-ef0d-4a6a-8298-e8134e5dd754 \
   --output tmp/watermarked_image.jpg
 
 # 結果の確認

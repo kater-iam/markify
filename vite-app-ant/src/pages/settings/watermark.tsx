@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Card, Form, Input, InputNumber, Switch, Button, message, Spin, Alert, Typography } from 'antd';
+import { Card, Form, Input, InputNumber, Button, message, Spin, Alert, Typography } from 'antd';
 import { supabaseClient } from '../../utility/supabaseClient';
 import { Authenticated } from "@refinedev/core";
 import { ReloadOutlined, SaveOutlined } from "@ant-design/icons";
@@ -7,19 +7,17 @@ import { ReloadOutlined, SaveOutlined } from "@ant-design/icons";
 const { Title, Text } = Typography;
 
 interface WatermarkSettingsData {
-  enabled: boolean;
-  text: string;
   fontSize: number;
   opacity: number;
   color: string;
+  spacing: number;
 }
 
 const defaultSettings: WatermarkSettingsData = {
-  enabled: false,
-  text: '',
   fontSize: 24,
   opacity: 0.5,
   color: '#000000',
+  spacing: 100,
 };
 
 export const WatermarkSettings: React.FC = () => {
@@ -146,24 +144,6 @@ export const WatermarkSettings: React.FC = () => {
           style={{ marginTop: 20 }}
         >
           <Form.Item
-            name="enabled"
-            label="ウォーターマークを有効にする"
-            valuePropName="checked"
-            tooltip="有効にすると、画像表示時に透かしが表示されます。"
-          >
-            <Switch />
-          </Form.Item>
-
-          <Form.Item
-            name="text"
-            label="ウォーターマークテキスト"
-            rules={[{ required: true, message: 'テキストを入力してください' }]}
-            tooltip="透かしとして表示する文字列を入力します。"
-          >
-            <Input placeholder="例: © 2024 Your Company" />
-          </Form.Item>
-
-          <Form.Item
             name="fontSize"
             label="フォントサイズ (px)"
             rules={[{ required: true, message: 'フォントサイズを入力してください' }]}
@@ -191,6 +171,15 @@ export const WatermarkSettings: React.FC = () => {
             tooltip="透かしの色を選択します。"
           >
             <Input type="color" style={{ width: '100px' }} />
+          </Form.Item>
+
+          <Form.Item
+            name="spacing"
+            label="文字間隔 (px)"
+            rules={[{ required: true, message: '文字間隔を入力してください' }]}
+            tooltip="透かし文字の間隔をピクセル単位で指定します。大きくすると文字の重なりが減ります。"
+          >
+            <InputNumber min={50} max={500} style={{ width: '100%' }} />
           </Form.Item>
 
           <Form.Item>

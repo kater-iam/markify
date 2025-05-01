@@ -5,9 +5,7 @@ module.exports = {
   testMatch: ['**/tests/**/*.test.ts'],
   moduleFileExtensions: ['ts', 'js', 'json', 'node'],
   transform: {
-    '^.+\\.ts$': ['ts-jest', {
-      useESM: true,
-    }],
+    '^.+\\.ts$': 'ts-jest'
   },
   setupFiles: ['dotenv/config'],
   testTimeout: 10000,

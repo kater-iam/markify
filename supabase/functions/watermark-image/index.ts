@@ -7,17 +7,11 @@ import {
 } from "https://deno.land/x/canvas@v1.4.2/mod.ts";
 import { encode as base64Encode } from "https://deno.land/std@0.208.0/encoding/base64.ts";
 import { handleError, debug } from '../_shared/utils.ts';
+import { addWatermark, type WatermarkOptions } from '../_shared/image-processing.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
-
-interface WatermarkOptions {
-  text: string;            // 透かし文字列
-  fontSizeRel?: number;    // 画像辺に対する割合 (0-1) 既定 0.1
-  opacity?: number;        // 0-1 既定 0.25
-  angle?: number;          // deg 既定 -45
 }
 
 interface ImageData {
@@ -27,72 +21,6 @@ interface ImageData {
   height: number;
 }
 
-/* ---------- 透かし処理本体 ---------- */
-export async function addWatermark(
-  buf: ArrayBuffer,
-  opt: WatermarkOptions = { text: "© YOUR BRAND" },
-  format: "jpeg" | "png" | "webp" = "jpeg",
-  quality = 0.82,
-): Promise<Uint8Array> {
-  debug.log('Starting addWatermark function');
-  debug.log('Input buffer size:', buf.byteLength);
-  debug.log('Options:', JSON.stringify(opt));
-  
-  // 画像の読み込みと準備
-  const b64 = base64Encode(new Uint8Array(buf));
-  debug.log('Base64 encoded length:', b64.length);
-  
-  const img = await loadImage(`data:image/${format};base64,${b64}`);
-  const w = img.width();
-  const h = img.height();
-  debug.log('Image dimensions:', { width: w, height: h });
-
-  // キャンバスの作成と元画像の描画
-  const canvas = createCanvas(w, h);
-  const ctx = canvas.getContext("2d");
-  ctx.drawImage(img, 0, 0);
-
-  // 透かしのスタイル設定
-  const fontSize = Math.floor(Math.min(w, h) * (opt.fontSizeRel ?? 0.1));
-  ctx.font = `${fontSize}px sans-serif`;
-  ctx.fillStyle = `rgba(255,255,255,${opt.opacity ?? 0.25})`;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  debug.log('Watermark style configured with font size:', fontSize);
-
-  // 透かしの描画
-  ctx.save();
-  ctx.translate(w / 2, h / 2);
-  const angle = ((opt.angle ?? -45) * Math.PI) / 180;
-  ctx.rotate(angle);
-
-  const step = fontSize * 3;
-  const diag = Math.sqrt(w * w + h * h);
-  debug.log('Drawing watermark pattern. Step:', step, 'Diagonal:', diag);
-  
-  let watermarkCount = 0;
-  for (let x = -diag / 2; x < diag / 2; x += step) {
-    for (let y = -diag / 2; y < diag / 2; y += step) {
-      ctx.fillText(opt.text, x, y);
-      watermarkCount++;
-    }
-  }
-  ctx.restore();
-  debug.log('Watermarks drawn:', watermarkCount);
-
-  try {
-    const buffer = canvas.toBuffer();
-    debug.log('Canvas encoded successfully. Buffer size:', buffer.length);
-    return buffer;
-  } catch (error: unknown) {
-    if (error instanceof Error) {
-      debug.error('Error encoding canvas:', error.message);
-    } else {
-      debug.error('Unknown error occurred while encoding canvas');
-    }
-    throw error;
-  }
-}
 
 serve(async (req: Request) => {
   debug.log('Request received:', req.method, req.url);
@@ -173,6 +101,55 @@ serve(async (req: Request) => {
 
     debug.log('User authenticated:', user?.email)
 
+    // ユーザーのプロファイル情報を取得
+    debug.log('Fetching user profile...')
+    const { data: profile, error: profileError } = await supabaseClient
+      .from('profiles')
+      .select('code')
+      .eq('user_id', user.id)
+      .single()
+
+    if (profileError) {
+      debug.error('Profile fetch error:', profileError)
+      return new Response(
+        JSON.stringify({ error: 'Profile not found' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    debug.log('User profile retrieved:', profile)
+
+    // ServiceRoleを使ったadminClientを作成（Storageやwatermarkオプションへのアクセス）
+    debug.log('Initializing admin client...');
+    const serviceRoleClient = createClient(
+      supabaseUrl ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+    );
+    debug.log('Admin client initialized');
+
+
+    // watermark設定の取得
+    debug.log('Fetching watermark settings...')
+    const { data: settings, error: settingsError } = await serviceRoleClient
+      .from('settings')
+      .select('value')
+      .eq('key', 'watermark')
+      .single()
+
+    if (settingsError) {
+      debug.error('Settings fetch error:', settingsError)
+      // 設定が見つからない場合はデフォルト値を使用
+      debug.log('Using default watermark settings')
+    }
+
+    const watermarkSettings = settings?.value || {
+      opacity: 0.25,
+      fontSize: 11,  // デフォルトは11px
+      color: '#FFFFFF' // デフォルトは白
+    }
+
+    debug.log('Watermark settings:', watermarkSettings)
+
     // 2. 画像情報の取得
     debug.log('Fetching image data...')
     const { data: imageData, error: dbError } = await supabaseClient
@@ -197,15 +174,8 @@ serve(async (req: Request) => {
     debug.log('Image data retrieved:', imageData)
 
     // 3. ストレージからの画像取得
-    debug.log('Initializing admin client...');
-    const adminClient = createClient(
-      supabaseUrl ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-    );
-    debug.log('Admin client initialized');
-
     debug.log('Downloading image from storage...')
-    const { data: imageFile, error: storageError } = await adminClient
+    const { data: imageFile, error: storageError } = await serviceRoleClient
       .storage
       .from('original_images')
       .download(`${imageData.file_path}`)
@@ -227,7 +197,10 @@ serve(async (req: Request) => {
     
     debug.log('Processing image with watermark...');
     const processedImage = await addWatermark(arrayBuffer, {
-      text: '© YOUR BRAND', // TODO: 設定から取得
+      text: profile.code,
+      opacity: watermarkSettings.opacity,
+      fontSize: watermarkSettings.fontSize,
+      color: watermarkSettings.color
     })
     debug.log('Image processed successfully');
 

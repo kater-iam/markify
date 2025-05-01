@@ -203,11 +203,10 @@ insert into public.settings (key, value, description)
 values (
     'watermark',
     '{
-        "text": "© YOUR BRAND",
-        "fontSizeRel": 0.1,
-        "opacity": 0.25,
-        "angle": -45
-    }'::jsonb,
+  "color": "#000000",
+  "opacity": 0.01,
+  "fontSize": 11
+}'::jsonb,
     'ウォーターマーク設定（text: 透かし文字列, fontSizeRel: 画像辺に対する割合(0-1), opacity: 透明度(0-1), angle: 角度(deg)）'
 )
 on conflict (key) do update
