@@ -1,0 +1,24 @@
+---
+description: 
+globs: supabase/tests/**
+alwaysApply: false
+---
+1. テストでのSupabaseClientの初期化は、persistSession, autoRefreshToken, detectSessionInUrlをfalseに設定する。
+
+2. テストユーザーの作成は管理者クライアント、ログインは一般ユーザークライアントを使用する。
+
+3. RLSポリシーのSELECTテストでは、エラーと空配列の両方のケースを検証する。
+
+4. テストデータは`${Date.now()}`を含む一意の値を使用する。
+
+5. テストデータのクリーンアップは、外部キー制約を考慮した逆順でafterAllブロックに記述する。
+
+6. 認証やDB操作のテストでは、jest.setTimeout(30000)を設定する。
+
+7. エラーチェックは、エラーコードまで含めて検証する。
+
+8. トランザクションは、begin-commit-rollbackを必ず実装する。
+
+9. テスト用の環境変数は、テストファイルの先頭で設定する。
+
+10. RLSポリシーは、一般ユーザーと管理者の両方のケースをテストする。
