@@ -1,7 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Card, Form, Input, InputNumber, Switch, Button, message, Spin, Alert } from 'antd';
-import { Authenticated, useOne, useUpdate } from "@refinedev/core";
-import { ReloadOutlined } from "@ant-design/icons";
+import { Card, Form, Input, InputNumber, Switch, Button, message, Spin, Alert, Typography } from 'antd';
+import { supabaseClient } from '../../utility/supabaseClient';
+import { Authenticated } from "@refinedev/core";
+import { ReloadOutlined, SaveOutlined } from "@ant-design/icons";
+
+const { Title, Text } = Typography;
 
 interface WatermarkSettingsData {
   enabled: boolean;
@@ -9,13 +12,6 @@ interface WatermarkSettingsData {
   fontSize: number;
   opacity: number;
   color: string;
-}
-
-interface SettingRecord {
-  id: string | number;
-  key: string;
-  value: WatermarkSettingsData;
-  description?: string;
 }
 
 const defaultSettings: WatermarkSettingsData = {
@@ -28,81 +24,87 @@ const defaultSettings: WatermarkSettingsData = {
 
 export const WatermarkSettings: React.FC = () => {
   const [form] = Form.useForm<WatermarkSettingsData>();
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [recordId, setRecordId] = useState<string | number | null>(null);
+  const [loadError, setLoadError] = useState<Error | null>(null);
 
-  const { data: queryResult, isLoading, isError, error, refetch } = useOne<SettingRecord>(
-    {
-      resource: "settings",
-      id: "watermark",
-      meta: {
-        // Supabase Data Provider は meta を直接 SQL に反映しないため、
-        // id として key を渡し、dataProvider の getOne で解釈させるか、
-        // useList を使うか、dataProvider のカスタマイズが必要になる。
-        // ここでは一旦 key を id として渡す方法を試す。
-        // 本来なら getOne(resource, { id: 'some-uuid', meta: { filters: [...] } }) や
-        // getList(resource, { filters: [...] }) が適切。
-        // select: "value" // 必要なら指定
-      },
-    },
-  );
+  const loadSettings = async () => {
+    setLoading(true);
+    setLoadError(null);
+    try {
+      const { data, error } = await supabaseClient
+        .from('settings')
+        .select('value')
+        .eq('key', 'watermark')
+        .single();
 
-  useEffect(() => {
-    if (queryResult?.data) {
-      const record = queryResult.data;
-      if (record?.value) {
-        form.setFieldsValue(record.value);
-        setRecordId(record.id);
+      if (error && error.code !== 'PGRST116') {
+         throw error;
+      }
+
+      if (data?.value) {
+        form.setFieldsValue(data.value as WatermarkSettingsData);
       } else {
         form.setFieldsValue(defaultSettings);
-        setRecordId(null);
       }
-    } else if (!isLoading && !isError) {
+    } catch (error: any) {
+      console.error('ウォーターマーク設定の読み込みに失敗しました:', error);
+      message.error(`設定の読み込みに失敗しました: ${error.message}`);
+      setLoadError(error);
       form.setFieldsValue(defaultSettings);
-      setRecordId(null);
+    } finally {
+      setLoading(false);
     }
-  }, [queryResult, form, isLoading, isError]);
+  }
 
-  const { mutate } = useUpdate<SettingRecord>();
+  useEffect(() => {
+    loadSettings();
+  }, []);
 
   const onFinish = async (values: WatermarkSettingsData) => {
-    if (recordId) {
-      mutate({
-        resource: "settings",
-        id: recordId,
-        values: {
-          value: values,
-          description: 'ウォーターマーク設定'
-        },
-        successNotification: () => ({
-          message: "設定を保存しました",
-          type: "success"
-        }),
-        errorNotification: (error) => ({
-          message: `設定の保存に失敗しました: ${error?.message || '不明なエラー'}`,
-          type: "error"
-        })
-      });
-    } else {
-      console.error("初回保存のためのレコードIDが見つかりません。Upsertロジックが必要です。");
-      message.error("設定の初回保存に失敗しました。開発者に連絡してください。");
+    setSaving(true);
+    console.log("Form Values:", values);
+    try {
+        const { error } = await supabaseClient
+            .from('settings')
+            .upsert({
+                key: 'watermark',
+                value: values,
+                description: 'ウォーターマーク設定'
+            }, {
+                onConflict: 'key'
+            });
+
+        if (error) {
+            throw error;
+        }
+
+        message.success('ウォーターマーク設定を保存しました');
+
+    } catch (error: any) {
+      message.error(`設定の保存に失敗しました: ${error.message}`);
+      console.error("Save Error:", error);
+    } finally {
+      setSaving(false);
     }
   };
 
-  if (isLoading) {
+  if (loading) {
     return (
-      <Authenticated key="watermark-settings-loading" fallback={<div>認証が必要です</div>}>
+      <div>
         <Card title="ウォーターマーク設定">
           <div style={{ textAlign: 'center', padding: '50px' }}>
             <Spin size="large" />
             <p>設定を読み込んでいます...</p>
           </div>
         </Card>
-      </Authenticated>
+      </div>
     );
   }
 
-  if (isError) {
+
+
+  if (loadError) {
     return (
       <Authenticated key="watermark-settings-error" fallback={<div>認証が必要です</div>}>
         <Card title="ウォーターマーク設定">
@@ -110,9 +112,9 @@ export const WatermarkSettings: React.FC = () => {
             message="エラー"
             description={
               <>
-                設定の読み込み中にエラーが発生しました。
+                設定の読み込み中にエラーが発生しました。再試行してください。
                 <br />
-                ({(error as any)?.message || '不明なエラー'})
+                ({loadError.message || '不明なエラー'})
               </>
             }
             type="error"
@@ -120,7 +122,7 @@ export const WatermarkSettings: React.FC = () => {
             action={
               <Button
                 icon={<ReloadOutlined />}
-                onClick={() => refetch()}
+                onClick={loadSettings}
               >
                 再試行
               </Button>
@@ -132,20 +134,22 @@ export const WatermarkSettings: React.FC = () => {
   }
 
   return (
-    <Authenticated
-      key="watermark-settings"
-      fallback={<div>認証が必要です</div>}
+    <div
     >
-      <Card title="ウォーターマーク設定">
+      <Card>
+        <Title level={4}>ウォーターマーク設定</Title>
+        <Text>画像に表示するウォーターマーク（透かし）の設定を行います。</Text>
         <Form
           form={form}
           layout="vertical"
           onFinish={onFinish}
+          style={{ marginTop: 20 }}
         >
           <Form.Item
             name="enabled"
             label="ウォーターマークを有効にする"
             valuePropName="checked"
+            tooltip="有効にすると、画像表示時に透かしが表示されます。"
           >
             <Switch />
           </Form.Item>
@@ -154,41 +158,53 @@ export const WatermarkSettings: React.FC = () => {
             name="text"
             label="ウォーターマークテキスト"
             rules={[{ required: true, message: 'テキストを入力してください' }]}
+            tooltip="透かしとして表示する文字列を入力します。"
           >
-            <Input placeholder="例: © 2024 My Company" />
+            <Input placeholder="例: © 2024 Your Company" />
           </Form.Item>
 
           <Form.Item
             name="fontSize"
-            label="フォントサイズ"
+            label="フォントサイズ (px)"
             rules={[{ required: true, message: 'フォントサイズを入力してください' }]}
+            tooltip="透かし文字の大きさをピクセル単位で指定します。"
           >
-            <InputNumber min={8} max={72} />
+            <InputNumber min={8} max={128} style={{ width: '100%' }} />
           </Form.Item>
 
           <Form.Item
             name="opacity"
-            label="不透明度"
-            rules={[{ required: true, message: '不透明度を入力してください' }]}
+            label="不透明度 (0〜1)"
+            rules={[
+                { required: true, message: '不透明度を入力してください' },
+                { type: 'number', min: 0, max: 1, message: '0から1の間で指定してください' }
+            ]}
+            tooltip="透かしの透明度を指定します。0で完全に透明、1で完全に不透明です。"
           >
-            <InputNumber min={0} max={1} step={0.1} />
+            <InputNumber min={0} max={1} step={0.05} style={{ width: '100%' }}/>
           </Form.Item>
 
           <Form.Item
             name="color"
             label="色"
             rules={[{ required: true, message: '色を選択してください' }]}
+            tooltip="透かしの色を選択します。"
           >
-            <Input type="color" />
+            <Input type="color" style={{ width: '100px' }} />
           </Form.Item>
 
           <Form.Item>
-            <Button type="primary" htmlType="submit" loading={saving}>
-              保存
+            <Button
+                type="primary"
+                htmlType="submit"
+                loading={saving}
+                icon={<SaveOutlined />}
+            >
+              設定を保存
             </Button>
           </Form.Item>
         </Form>
       </Card>
-    </Authenticated>
+    </div>
   );
 }; 
