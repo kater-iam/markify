@@ -11,7 +11,7 @@ mkdir -p tmp
 # 再起動
 pkill -f "supabase functions serve" ; supabase functions serve > supabase/functions.log 2>&1 &
 
-sleep 3
+sleep 2
 
 # JWTの取得
 USER=user1@kater.jp PASSWORD=password123

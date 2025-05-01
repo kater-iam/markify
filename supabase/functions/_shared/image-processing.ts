@@ -7,6 +7,10 @@ import {
 } from "https://deno.land/x/canvas@v1.4.2/mod.ts";
 import { encode as base64Encode } from "https://deno.land/std@0.208.0/encoding/base64.ts";
 
+// デバッグログのユーティリティ関数
+const debugLog = (...args: unknown[]) => console.log('DEBUG:', ...args);
+const debugError = (...args: unknown[]) => console.error('DEBUG ERROR:', ...args);
+
 interface WatermarkOptions {
   text: string;            // 透かし文字列
   fontSizeRel?: number;    // 画像辺に対する割合 (0-1) 既定 0.1
@@ -41,21 +45,32 @@ export async function addWatermark(
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 
-  /* 斜めで全面敷き詰め */
+  /* 透かしの描画 */
   ctx.save();
   ctx.translate(w / 2, h / 2);
-  ctx.rotate(((opt.angle ?? -45) * Math.PI) / 180);
+  const angle = ((opt.angle ?? -45) * Math.PI) / 180;
+  ctx.rotate(angle);
+  debugLog('Canvas transformed for watermark');
 
   const step = fontSize * 3;
   const diag = Math.sqrt(w * w + h * h);
+  let watermarkCount = 0;
+
   for (let x = -diag / 2; x < diag / 2; x += step) {
     for (let y = -diag / 2; y < diag / 2; y += step) {
       ctx.fillText(opt.text, x, y);
+      watermarkCount++;
     }
   }
   ctx.restore();
+  debugLog('Watermarks drawn:', watermarkCount);
 
-  return canvas.toBuffer(`image/${format}`, Math.floor(quality * 100));
+  debugLog('Encoding final image...');
+  // 修正：toBufferの引数を正しく指定
+  const buffer = canvas.toBuffer();
+  debugLog('Final buffer size:', buffer.length);
+
+  return buffer;
 }
 
 /* ---------- Supabase Edge Function ---------- */
@@ -65,7 +80,7 @@ const cors = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-serve(async (req) => {
+serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: cors });
   }
@@ -108,10 +123,14 @@ serve(async (req) => {
     return new Response(JSON.stringify({ url: publicUrl }), {
       headers: { ...cors, "Content-Type": "application/json" },
     });
-  } catch (e) {
-    return new Response(JSON.stringify({ error: e.message }), {
-      headers: { ...cors, "Content-Type": "application/json" },
-      status: 400,
-    });
+  } catch (error: unknown) {
+    debugError('Error in request:', error);
+    return new Response(
+      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
+      {
+        headers: { ...cors, "Content-Type": "application/json" },
+        status: 400,
+      }
+    );
   }
 });
