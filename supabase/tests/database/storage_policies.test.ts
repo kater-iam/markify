@@ -22,62 +22,83 @@ describe('Storage Policies Tests', () => {
   let testEmail: string;
 
   beforeAll(async () => {
-    // テスト用の画像を作成
-    const testDir = path.join(__dirname, '../test_data');
-    testImagePath = path.join(testDir, 'test.png');
-    if (!fs.existsSync(testDir)) {
-      fs.mkdirSync(testDir, { recursive: true });
+    try {
+      // テスト用の画像を作成
+      const testDir = path.join(__dirname, '../test_data');
+      testImagePath = path.join(testDir, 'test.png');
+      if (!fs.existsSync(testDir)) {
+        fs.mkdirSync(testDir, { recursive: true });
+      }
+      // 1x1の透明なPNG画像を作成
+      testImageBuffer = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==', 'base64');
+      fs.writeFileSync(testImagePath, testImageBuffer);
+
+      // テストユーザーのメールアドレスを生成
+      testEmail = `test-${Date.now()}@example.com`;
+
+      // 管理者クライアントの設定
+      adminClient = createClient(
+        process.env.SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        {
+          auth: {
+            // debug: true,
+            persistSession: false,
+            autoRefreshToken: false,
+            detectSessionInUrl: false
+          }
+        }
+      );
+
+      // 一般ユーザークライアントの設定
+      generalUserClient = createClient(
+        process.env.SUPABASE_URL!,
+        process.env.SUPABASE_ANON_KEY!,
+        {
+          auth: {
+            // debug: true,
+            persistSession: false,
+            autoRefreshToken: false,
+            detectSessionInUrl: false
+          }
+        }
+      );
+
+      // テストユーザーの作成
+      const { data: authUser, error: authError } = await adminClient.auth.admin.createUser({
+        email: testEmail,
+        password: 'testpassword123',
+        email_confirm: true
+      });
+      if (authError) throw authError;
+      testUserId = authUser.user.id;
+
+      // テストプロファイルの作成
+      const { data: profile, error: profileError } = await adminClient
+        .from('profiles')
+        .insert({
+          user_id: testUserId,
+          code: `st${Date.now() % 1000000}`,
+          first_name: 'Test',
+          last_name: 'User',
+          role: 'general'
+        })
+        .select()
+        .single();
+      if (profileError) throw profileError;
+      testProfileId = profile.id;
+
+      // 一般ユーザーとしてログイン
+      const { error: signInError } = await generalUserClient.auth.signInWithPassword({
+        email: testEmail,
+        password: 'testpassword123'
+      });
+      if (signInError) throw signInError;
+    } catch (error) {
+      console.error('Error in beforeAll:', error);
+      throw error;
     }
-    // 1x1の透明なPNG画像を作成
-    testImageBuffer = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==', 'base64');
-    fs.writeFileSync(testImagePath, testImageBuffer);
-
-    // テストユーザーのメールアドレスを生成
-    testEmail = `test-${Date.now()}@example.com`;
-
-    // 管理者クライアントの設定
-    adminClient = createClient(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
-
-    // 一般ユーザークライアントの設定
-    generalUserClient = createClient(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_ANON_KEY!
-    );
-
-    // テストユーザーの作成
-    const { data: authUser, error: authError } = await adminClient.auth.admin.createUser({
-      email: testEmail,
-      password: 'testpassword123',
-      email_confirm: true
-    });
-    if (authError) throw authError;
-    testUserId = authUser.user.id;
-
-    // テストプロファイルの作成
-    const { data: profile, error: profileError } = await adminClient
-      .from('profiles')
-      .insert({
-        user_id: testUserId,
-        code: `test${Date.now()}`,
-        first_name: 'Test',
-        last_name: 'User',
-        role: 'general'
-      })
-      .select()
-      .single();
-    if (profileError) throw profileError;
-    testProfileId = profile.id;
-
-    // 一般ユーザーとしてログイン
-    const { error: signInError } = await generalUserClient.auth.signInWithPassword({
-      email: testEmail,
-      password: 'testpassword123'
-    });
-    if (signInError) throw signInError;
-  });
+  }, 30000); // タイムアウトを30秒に設定
 
   describe('original_images バケットのテスト', () => {
     it('一般ユーザーはオリジナル画像をアップロードできない', async () => {

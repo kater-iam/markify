@@ -1,6 +1,6 @@
-# Supabaseの操作とデータベース管理のルール背景
+# Supabaseの運用ルール背景
 
-このドキュメントは[supabase.mdc](./../rules/supabase.mdc)のルールの背景を説明するものです。
+このドキュメントは[supabase-ops.mdc](./../rules/supabase-ops.mdc)のルールの背景を説明するものです。
 
 ## 1. 専用Terminalの使用
 - 「supabase」という名前の専用Terminalを使用することで：
@@ -16,7 +16,7 @@
 
 ## 3. ローカル関数の起動方法
 ```bash
-pkill -f "supabase functions serve" ; supabase functions serve > supabase/functions.log 2>&1 &
+pkill -f \"supabase functions serve\" ; supabase functions serve > supabase/functions.log 2>&1 &
 ```
 - このコマンドの利点：
   - 既存のプロセスを確実に終了
@@ -80,61 +80,11 @@ docker rmi [古いイメージID]
 ```
 - ディスク容量の効率的な管理
 - 不要なイメージの蓄積を防止
-- システムリソースの最適化 
+- システムリソースの最適化
 
-## 10. Edge Functions の認証
-
-### 基本的な認証フロー
-```typescript
-// Supabaseクライアントの初期化
-const supabaseClient = createClient(
-  Deno.env.get('SUPABASE_URL') ?? '',
-  Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-)
-
-// JWTトークンの取得と認証
-const authHeader = req.headers.get('Authorization')!
-const token = authHeader.replace('Bearer ', '')
-const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token)
-
-if (authError || !user) {
-  return new Response(
-    JSON.stringify({ error: 'Unauthorized' }),
-    { status: 401, headers: { 'Content-Type': 'application/json' } }
-  )
-}
-```
-
-### クライアントからの呼び出し方法
+## 10. psqlコマンドの利用
 ```bash
-# JWTトークンの取得
-ACCESS_TOKEN=$(curl -s -X POST 'http://localhost:54411/auth/v1/token?grant_type=password' \
-  -H "apikey: $(supabase status --output json | jq -r '.api.anon_key')" \
-  -H "Content-Type: application/json" \
-  -d '{"email":"user1@example.com","password":"password123"}' | jq -r '.access_token')
-
-# Edge Functionの呼び出し
-curl -H "Authorization: Bearer $ACCESS_TOKEN" \
-  http://localhost:54411/functions/v1/your-function-name
+psql \"$(supabase status --output json | jq -r '.DB_URL')\"
 ```
-
-### 重要な注意点
-1. Edge Functions内では`SUPABASE_ANON_KEY`を使用してクライアントを初期化
-2. クライアントからの呼び出し時は`Authorization`ヘッダーにJWTトークンを設定
-3. 認証エラーは適切にハンドリングし、401ステータスコードを返す
-4. 環境変数（`SUPABASE_URL`と`SUPABASE_ANON_KEY`）が正しく設定されていることを確認
-
-### 参考資料
-- [Supabase Edge Functions Auth公式ドキュメント](https://supabase.com/docs/guides/functions/auth)
-- [Supabase Edge Functions Overview](https://supabase.com/docs/guides/functions)
-- [JWT認証の基本概念](https://supabase.com/docs/learn/auth-deep-dive/auth-deep-dive-jwts)
-
-### ローカル開発時のデバッグ
-```bash
-# ログの確認
-tail -f supabase/functions.log
-
-# 認証情報の確認
-supabase status --output json | jq '.api.anon_key'
-```
-
+- ローカルDBへの接続を容易に
+- 環境変数や設定ファイルへの依存を排除 

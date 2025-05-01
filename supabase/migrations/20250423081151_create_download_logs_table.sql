@@ -15,7 +15,13 @@ ALTER TABLE public.download_logs ENABLE ROW LEVEL SECURITY;
 CREATE POLICY download_logs_select ON public.download_logs
   FOR SELECT
   TO authenticated
-  USING (auth.role() = 'admin');
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE profiles.user_id = auth.uid()
+      AND profiles.role = 'admin'::profile_role
+    )
+  );
 
 -- INSERT: admin and general (own only)
 CREATE POLICY download_logs_insert ON public.download_logs
@@ -33,14 +39,32 @@ CREATE POLICY download_logs_insert ON public.download_logs
 CREATE POLICY download_logs_update ON public.download_logs
   FOR UPDATE
   TO authenticated
-  USING (auth.role() = 'admin')
-  WITH CHECK (auth.role() = 'admin');
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE profiles.user_id = auth.uid()
+      AND profiles.role = 'admin'::profile_role
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE profiles.user_id = auth.uid()
+      AND profiles.role = 'admin'::profile_role
+    )
+  );
 
 -- DELETE: only admin
 CREATE POLICY download_logs_delete ON public.download_logs
   FOR DELETE
   TO authenticated
-  USING (auth.role() = 'admin');
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE profiles.user_id = auth.uid()
+      AND profiles.role = 'admin'::profile_role
+    )
+  );
 
 -- Indexes for foreign keys
 CREATE INDEX idx_profiles_user_id ON public.profiles(user_id);
@@ -66,7 +90,6 @@ CREATE TRIGGER trg_download_logs_updated_at
   FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 
 -- Column-Level Privileges
--- 1. Revoke all privileges from authenticated users
+-- 1. Grant insert to authenticated users
 REVOKE ALL ON public.download_logs FROM authenticated;
--- 2. Grant insert to authenticated users
 GRANT INSERT ON public.download_logs TO authenticated;

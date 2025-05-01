@@ -15,68 +15,106 @@ describe('RLS Policies Tests', () => {
   let testEmail: string;
 
   beforeAll(async () => {
-    // テストユーザーのメールアドレスを生成
-    testEmail = `test-${Date.now()}@example.com`;
+    try {
+      // テストユーザーのメールアドレスを生成
+      testEmail = `test-${Date.now()}@example.com`;
 
-    // 管理者クライアントの設定
-    adminClient = createClient(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+      // 管理者クライアントの設定
+      adminClient = createClient(
+        process.env.SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        {
+          auth: {
+            // debug: true,
+            persistSession: false,
+            autoRefreshToken: false,
+            detectSessionInUrl: false
+          }
+        }
+      );
 
-    // 一般ユーザークライアントの設定
-    generalUserClient = createClient(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_ANON_KEY!
-    );
+      // 一般ユーザークライアントの設定（一時的）
+      const tempClient = createClient(
+        process.env.SUPABASE_URL!,
+        process.env.SUPABASE_ANON_KEY!,
+        {
+          auth: {
+            persistSession: false,
+            autoRefreshToken: false,
+            detectSessionInUrl: false
+          }
+        }
+      );
 
-    // テストユーザーの作成
-    const { data: authUser, error: authError } = await adminClient.auth.admin.createUser({
-      email: testEmail,
-      password: 'testpassword123',
-      email_confirm: true
-    });
-    if (authError) throw authError;
-    testUserId = authUser.user.id;
+      // テストユーザーの作成
+      const { data: authUser, error: authError } = await adminClient.auth.admin.createUser({
+        email: testEmail,
+        password: 'testpassword123',
+        email_confirm: true
+      });
+      if (authError) throw authError;
+      testUserId = authUser.user.id;
 
-    // テストプロファイルの作成
-    const { data: profile, error: profileError } = await adminClient
-      .from('profiles')
-      .insert({
-        user_id: testUserId,
-        code: `test${Date.now()}`,
-        first_name: 'Test',
-        last_name: 'User',
-        role: 'general'
-      })
-      .select()
-      .single();
-    if (profileError) throw profileError;
-    testProfileId = profile.id;
+      // テストプロファイルの作成
+      const { data: profile, error: profileError } = await adminClient
+        .from('profiles')
+        .insert({
+          user_id: testUserId,
+          code: `rls${Date.now() % 1000000}`,
+          first_name: 'Test',
+          last_name: 'User',
+          role: 'general'
+        })
+        .select()
+        .single();
+      if (profileError) throw profileError;
+      testProfileId = profile.id;
 
-    // テスト画像の作成
-    const { data: image, error: imageError } = await adminClient
-      .from('images')
-      .insert({
-        profile_id: testProfileId,
-        file_path: '/test/image.jpg',
-        original_filename: 'image.jpg',
-        name: 'Test Image',
-        width: 100,
-        height: 100
-      })
-      .select()
-      .single();
-    if (imageError) throw imageError;
-    testImageId = image.id;
+      // テスト画像の作成
+      const { data: image, error: imageError } = await adminClient
+        .from('images')
+        .insert({
+          profile_id: testProfileId,
+          file_path: '/test/image.jpg',
+          original_filename: 'image.jpg',
+          name: 'Test Image',
+          width: 100,
+          height: 100
+        })
+        .select()
+        .single();
+      if (imageError) throw imageError;
+      testImageId = image.id;
 
-    // 一般ユーザーとしてログイン
-    const { error: signInError } = await generalUserClient.auth.signInWithPassword({
-      email: testEmail,
-      password: 'testpassword123'
-    });
-    if (signInError) throw signInError;
-  });
+
+
+      // 一般ユーザークライアントを認証済みセッションで再設定
+      generalUserClient = createClient(
+        process.env.SUPABASE_URL!,
+        process.env.SUPABASE_ANON_KEY!,
+        {
+          auth: {
+            persistSession: false,
+            autoRefreshToken: false,
+            detectSessionInUrl: false
+          },
+        }
+      );
+
+      // 一般ユーザーとしてログイン
+        const { data: signInData, error: signInError } = await generalUserClient.auth.signInWithPassword({
+          email: testEmail,
+          password: 'testpassword123'
+        });
+        if (signInError) throw signInError;
+
+    } catch (error) {
+      console.error('Error in beforeAll:', error);
+      throw error;
+    }
+    
+
+  }, 30000); // タイムアウトを30秒に設定
 
   describe('profiles テーブル', () => {
     it('一般ユーザーは全てのプロファイルを参照できる', async () => {
@@ -87,6 +125,7 @@ describe('RLS Policies Tests', () => {
       expect(data).not.toBeNull();
       expect(data!.length).toBeGreaterThan(0);
     });
+
 
     it('一般ユーザーは新規プロファイルを作成できない', async () => {
       const { error } = await generalUserClient
@@ -162,10 +201,6 @@ describe('RLS Policies Tests', () => {
         .from('images')
         .select('*');
       
-      console.log('Retrieved images:', data); // デバッグ用のログ
-      console.log('Test profile ID:', testProfileId); // デバッグ用のログ
-      console.log('Other profile ID:', otherProfile.id); // デバッグ用のログ
-      
       expect(error).toBeNull();
       expect(data).not.toBeNull();
       expect(data!.length).toBeGreaterThan(1); // 少なくとも2つの画像があるはず
@@ -213,6 +248,104 @@ describe('RLS Policies Tests', () => {
           client_ip: '127.0.0.1'
         });
       expect(error).toBeNull();
+    });
+  });
+
+  describe('settings テーブル', () => {
+    const testSetting = {
+      key: `test-key-${Date.now()}`,
+      value: { test: 'value' },
+      description: 'テスト用設定'
+    };
+
+    beforeAll(async () => {
+      // テスト用の設定を管理者で作成
+      const { error } = await adminClient
+        .from('settings')
+        .insert(testSetting);
+      if (error) throw error;
+    });
+
+    it('一般ユーザーは設定を参照しようとすると空の配列が返される', async () => {
+      const { data, error } = await generalUserClient
+        .from('settings')
+        .select('*');
+      
+      expect(error).toBeNull();
+      expect(data).not.toBeNull();
+      expect(Array.isArray(data)).toBe(true);
+      expect(data).toHaveLength(0);
+    });
+
+    it('一般ユーザーは設定を作成できない', async () => {
+      const { error } = await generalUserClient
+        .from('settings')
+        .insert({
+          key: `test-key-2-${Date.now()}`,
+          value: { test: 'value2' },
+          description: 'テスト用設定2'
+        });
+      expect(error).not.toBeNull();
+    });
+
+    it('一般ユーザーは設定を更新できない', async () => {
+      const { error } = await generalUserClient
+        .from('settings')
+        .update({ value: { test: 'updated' } })
+        .eq('key', testSetting.key);
+      expect(error).not.toBeNull();
+    });
+
+    it('一般ユーザーは設定を削除できない', async () => {
+      const { error } = await generalUserClient
+        .from('settings')
+        .delete()
+        .eq('key', testSetting.key);
+      expect(error).not.toBeNull();
+    });
+
+    it('管理者は全ての操作が可能', async () => {
+      // 参照
+      const { data: selectData, error: selectError } = await adminClient
+        .from('settings')
+        .select('*')
+        .eq('key', testSetting.key);
+      expect(selectError).toBeNull();
+      expect(selectData).not.toBeNull();
+      expect(selectData![0].key).toBe(testSetting.key);
+
+      // 作成
+      const newSetting = {
+        key: `admin-test-key-${Date.now()}`,
+        value: { admin: 'test' },
+        description: '管理者テスト用設定'
+      };
+      const { error: insertError } = await adminClient
+        .from('settings')
+        .insert(newSetting);
+      expect(insertError).toBeNull();
+
+      // 更新
+      const { error: updateError } = await adminClient
+        .from('settings')
+        .update({ value: { admin: 'updated' } })
+        .eq('key', newSetting.key);
+      expect(updateError).toBeNull();
+
+      // 削除
+      const { error: deleteError } = await adminClient
+        .from('settings')
+        .delete()
+        .eq('key', newSetting.key);
+      expect(deleteError).toBeNull();
+    });
+
+    afterAll(async () => {
+      // テストデータのクリーンアップ
+      await adminClient
+        .from('settings')
+        .delete()
+        .eq('key', testSetting.key);
     });
   });
 

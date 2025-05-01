@@ -1,13 +1,13 @@
 ---
-description: Supabaseに関連する内容
-globs: supabase/**
+description: About Supabase operation such as supabase cli or Supabase migration
+globs: 
 alwaysApply: false
 ---
 1. Supabaseのローカル操作は専用の「supabase」という名前のTerminalウィンドウで実行すること。
 
 2. Supabaseのローカル操作は全てバックグラウンドで実行すること。
 
-3. ローカル関数の起動は `pkill -f "supabase functions serve" ; supabase functions serve > supabase/functions.log 2>&1 &` を使用すること。
+3. ローカル関数の起動は `pkill -f \"supabase functions serve\" ; supabase functions serve > supabase/functions.log 2>&1 &` を使用すること。
 
 4. オンラインSupabaseへの関数デプロイは明示的な指示があるまで行わないこと。
 
@@ -21,4 +21,4 @@ alwaysApply: false
 
 9. Dockerイメージは新規取得後、古いイメージを確認して削除すること。
 
-10. psql コマンドを使う際には psql  "$(supabase status --output json | jq -r '.DB_URL') を使う。
+10. psql コマンドを使う際には psql  \"$(supabase status --output json | jq -r '.DB_URL')\" を使う。

@@ -12,6 +12,7 @@ import routerBindings, {
 } from "@refinedev/react-router";
 import { dataProvider, liveProvider } from "@refinedev/supabase";
 import { App as AntdApp } from "antd";
+import { SettingOutlined } from "@ant-design/icons";
 import { BrowserRouter, Route, Routes, Outlet, Navigate } from "react-router-dom";
 import authProvider from "./authProvider";
 import { ColorModeContextProvider } from "./contexts/color-mode";
@@ -23,6 +24,8 @@ import { ImagesList, ImagesCreate, ImagesEdit, ImagesShow } from "./pages/images
 import { ProfilesList, ProfilesCreate, ProfilesEdit, ProfilesShow } from "./pages/profiles";
 import { DownloadLogsList, DownloadLogsCreate, DownloadLogsEdit, DownloadLogsShow } from "./pages/download_logs";
 import { ImagePage } from "./pages/ImagePage";
+import { WatermarkSettings } from "./pages/settings/watermark";
+import { GeminiApiSettings } from "./pages/settings/gemini-api";
 
 function App() {
   return (
@@ -34,7 +37,7 @@ function App() {
             <DevtoolsProvider>
               <Refine
                 dataProvider={dataProvider(supabaseClient)}
-                liveProvider={liveProvider(supabaseClient)}
+                // liveProvider={liveProvider(supabaseClient)} // 一時的にコメントアウト
                 authProvider={authProvider}
                 routerProvider={routerBindings}
                 notificationProvider={useNotificationProvider}
@@ -68,6 +71,14 @@ function App() {
                     meta: {
                       canDelete: true,
                     },
+                  },
+                  {
+                    name: "settings",
+                    meta: {
+                      label: "設定",
+                      icon: <SettingOutlined />,
+                    },
+                    list: "/settings/watermark",
                   },
                 ]}
                 options={{
@@ -125,6 +136,11 @@ function App() {
                       <Route path="create" element={<DownloadLogsCreate />} />
                       <Route path="edit/:id" element={<DownloadLogsEdit />} />
                       <Route path="show/:id" element={<DownloadLogsShow />} />
+                    </Route>
+                    <Route path="/settings">
+                      <Route index element={<Navigate to="/settings/watermark" />} />
+                      <Route path="watermark" element={<WatermarkSettings />} />
+                      <Route path="gemini-api" element={<GeminiApiSettings />} />
                     </Route>
                     <Route path="/" element={<Navigate to="/images" />} />
                   </Route>
