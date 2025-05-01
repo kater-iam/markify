@@ -51,7 +51,9 @@ export async function addWatermark(
   const angle = ((opt.angle ?? -45) * Math.PI) / 180;
   ctx.rotate(angle);
 
-  const step = fontSize * 3;
+  // 文字列の長さに基づいて間隔を計算
+  const textWidth = ctx.measureText(opt.text).width;
+  const step = Math.max(textWidth * 1.5, fontSize * 3); // 文字列の長さの1.5倍か、フォントサイズの3倍の大きい方を使用
   const diag = Math.sqrt(w * w + h * h);
   debug.log('Drawing watermark pattern. Step:', step, 'Diagonal:', diag);
   
