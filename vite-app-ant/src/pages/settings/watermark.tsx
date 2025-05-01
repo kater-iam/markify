@@ -10,12 +10,14 @@ interface WatermarkSettingsData {
   fontSize: number;
   opacity: number;
   color: string;
+  spacing: number;
 }
 
 const defaultSettings: WatermarkSettingsData = {
   fontSize: 24,
   opacity: 0.5,
   color: '#000000',
+  spacing: 100,
 };
 
 export const WatermarkSettings: React.FC = () => {
@@ -169,6 +171,15 @@ export const WatermarkSettings: React.FC = () => {
             tooltip="透かしの色を選択します。"
           >
             <Input type="color" style={{ width: '100px' }} />
+          </Form.Item>
+
+          <Form.Item
+            name="spacing"
+            label="文字間隔 (px)"
+            rules={[{ required: true, message: '文字間隔を入力してください' }]}
+            tooltip="透かし文字の間隔をピクセル単位で指定します。大きくすると文字の重なりが減ります。"
+          >
+            <InputNumber min={50} max={500} style={{ width: '100%' }} />
           </Form.Item>
 
           <Form.Item>
