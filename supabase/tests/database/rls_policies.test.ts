@@ -39,7 +39,6 @@ describe('RLS Policies Tests', () => {
         process.env.SUPABASE_ANON_KEY!,
         {
           auth: {
-  //            debug: true,
             persistSession: false,
             autoRefreshToken: false,
             detectSessionInUrl: false
@@ -99,25 +98,15 @@ describe('RLS Policies Tests', () => {
             autoRefreshToken: false,
             detectSessionInUrl: false
           },
-          // global: {
-          //   headers: {
-          //     Authorization: `Bearer ${signInData.session?.access_token}`
-          //   }
-          // }
         }
       );
 
       // 一般ユーザーとしてログイン
-      // const { data: signInData, error: signInError } = await tempClient.auth.signInWithPassword({
         const { data: signInData, error: signInError } = await generalUserClient.auth.signInWithPassword({
           email: testEmail,
           password: 'testpassword123'
         });
         if (signInError) throw signInError;
-
-        // const { data, error } = await adminClient.from('profiles').select('*')
-        // console.log(signInData.user.id)
-        // console.log(data)
 
     } catch (error) {
       console.error('Error in beforeAll:', error);
@@ -212,10 +201,6 @@ describe('RLS Policies Tests', () => {
         .from('images')
         .select('*');
       
-      // console.log('Retrieved images:', data); // デバッグ用のログ
-      // console.log('Test profile ID:', testProfileId); // デバッグ用のログ
-      // console.log('Other profile ID:', otherProfile.id); // デバッグ用のログ
-      
       expect(error).toBeNull();
       expect(data).not.toBeNull();
       expect(data!.length).toBeGreaterThan(1); // 少なくとも2つの画像があるはず
@@ -285,12 +270,10 @@ describe('RLS Policies Tests', () => {
       const { data, error } = await generalUserClient
         .from('settings')
         .select('*');
-      console.log(data)
 
       const { data: dataa, error: errora } = await adminClient
       .from('profiles')
       .select('*');
-      console.log(dataa, errora)
 
       expect(error).not.toBeNull();
       expect(data).toBeNull();
@@ -372,7 +355,7 @@ describe('RLS Policies Tests', () => {
     // テストデータのクリーンアップ
     await adminClient.from('download_logs').delete().eq('profile_id', testProfileId);
     await adminClient.from('images').delete().eq('id', testImageId);
-    // await adminClient.from('profiles').delete().eq('id', testProfileId);
+    await adminClient.from('profiles').delete().eq('id', testProfileId);
     await adminClient.auth.admin.deleteUser(testUserId);
   });
 });
