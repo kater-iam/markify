@@ -26,6 +26,35 @@ const { data } = await generalClient.auth.signInWithPassword({...});
 ```
 権限の明確な分離により、テストの意図が明確になります。
 
+## 2-1. ユーザーのログイン検証
+```typescript
+// サービスロールは権限が強すぎるため、実際のユーザー権限のテストには使用しない
+// 代わりに auth.signInWithPassword でログインしたクライアントを使用する
+const userClient = createClient(url, anonKey, {
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+    detectSessionInUrl: false
+  }
+});
+
+// 管理者としてログイン
+const { data: adminData, error: adminError } = await userClient.auth.signInWithPassword({
+  email: 'admin@example.com',
+  password: 'password'
+});
+
+// 一般ユーザーとしてログイン
+const { data: userData, error: userError } = await userClient.auth.signInWithPassword({
+  email: 'user@example.com',
+  password: 'password'
+});
+
+// ログインしたクライアントで操作を実行
+const { data, error } = await userClient.from('table').select();
+```
+サービスロールは RLS をバイパスしてしまうため、実際のユーザー権限のテストには `auth.signInWithPassword` でログインしたクライアントを使用します。これにより、RLS ポリシーが正しく機能しているかを適切にテストできます。
+
 ## 3. RLSポリシーのテストパターン
 エラーが返される場合：
 ```sql
