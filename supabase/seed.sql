@@ -37,7 +37,7 @@ SELECT
   '00000000-0000-0000-0000-000000000000'::uuid AS instance_id,
   md5(format('user-id-%s', gs.i))::uuid AS id,
   'authenticated', 'authenticated',
-  format('user%s@kater.jp', gs.i - 1),
+  format('user%02s@kater.jp', gs.i - 1),
   crypt('password123', gen_salt('bf')),
   current_timestamp, '', current_timestamp,
   '', current_timestamp, '', '',
