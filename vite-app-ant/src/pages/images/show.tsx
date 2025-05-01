@@ -70,7 +70,19 @@ export const ImagesShow: React.FC = () => {
   return (
     <Show isLoading={isLoading}>
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
-        <Card>
+      <Card>
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: '20px' }}>
+              <Spin />
+            </div>
+          ) : imageUrl ? (
+            <Image
+              src={imageUrl}
+              alt="Watermarked image"
+              style={{ maxWidth: '100%' }}
+            />
+          ) : null}
+        </Card>        <Card>
           <Title level={5}>画像情報</Title>
           <Descriptions column={1}>
             <Descriptions.Item label="ファイル名">{record?.name}</Descriptions.Item>
@@ -84,19 +96,7 @@ export const ImagesShow: React.FC = () => {
           </Descriptions>
         </Card>
 
-        <Card title="ウォーターマーク付き画像">
-          {loading ? (
-            <div style={{ textAlign: 'center', padding: '20px' }}>
-              <Spin />
-            </div>
-          ) : imageUrl ? (
-            <Image
-              src={imageUrl}
-              alt="Watermarked image"
-              style={{ maxWidth: '100%' }}
-            />
-          ) : null}
-        </Card>
+
       </Space>
     </Show>
   );
