@@ -27,6 +27,39 @@ import * as path from 'path';
 import * as dotenv from 'dotenv';
 import sharp from 'sharp';
 
+// ファイル名パターンと日本語名のマッピング
+const patterns: { [key: string]: string } = {
+  'landscape': '縦長書類',
+  'portrait': '縦長書類',
+  'product': '製品',
+  'architecture': '建物画像',
+  'table': '表',
+  'graph': 'グラフ',
+  'diagram': '図表',
+  'chart': 'チャート',
+  'typewriter': 'タイプ打ち文書',
+  'printed': '印刷文書',
+  'mixed': '混合文書',
+  'handwritten': '手書き文書'
+};
+
+// ファイル名から日本語名を生成する関数
+function getJapaneseName(filename: string): string {
+  // 数字とアンダースコアを除去してパターンマッチング用の文字列を作成
+  const baseFilename = filename.replace(/\d+_/, '').replace('.jpg', '');
+  
+  for (const [pattern, jaName] of Object.entries(patterns)) {
+    if (baseFilename.includes(pattern)) {
+      // ファイル番号を抽出
+      const numberMatch = filename.match(/^(\d+)_/);
+      const number = numberMatch ? numberMatch[1] : '';
+      return `${jaName}${number ? ` (${number})` : ''}`;
+    }
+  }
+  
+  return filename.split('.')[0]; // マッチするパターンがない場合はファイル名をそのまま使用
+}
+
 dotenv.config();
 
 // 画像ディレクトリのパス
@@ -86,7 +119,7 @@ async function uploadImages(supabase: any) {
           profile_id: '00000000-0000-0000-0000-000000000001',
           file_path: file,
           original_filename: file,
-          name: file.split('.')[0],
+          name: getJapaneseName(file),
           width,
           height
         });
