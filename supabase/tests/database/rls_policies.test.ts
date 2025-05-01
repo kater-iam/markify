@@ -266,17 +266,15 @@ describe('RLS Policies Tests', () => {
       if (error) throw error;
     });
 
-    it('一般ユーザーは設定を参照できない', async () => {
+    it('一般ユーザーは設定を参照しようとすると空の配列が返される', async () => {
       const { data, error } = await generalUserClient
         .from('settings')
         .select('*');
-
-      const { data: dataa, error: errora } = await adminClient
-      .from('profiles')
-      .select('*');
-
-      expect(error).not.toBeNull();
-      expect(data).toBeNull();
+      
+      expect(error).toBeNull();
+      expect(data).not.toBeNull();
+      expect(Array.isArray(data)).toBe(true);
+      expect(data).toHaveLength(0);
     });
 
     it('一般ユーザーは設定を作成できない', async () => {

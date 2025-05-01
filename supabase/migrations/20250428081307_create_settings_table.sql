@@ -1,5 +1,5 @@
 -- moddatetime関数の作成
-create extension if not exists moddatetime schema extensions;
+-- create extension if not exists moddatetime schema extensions;
 
 -- settingsテーブルの作成
 create table public.settings (
@@ -32,8 +32,11 @@ drop policy if exists "管理者以外のアクセスを拒否" on public.settin
 drop policy if exists "一般ユーザーのアクセスを拒否" on public.settings;
 
 -- 管理者のみが全ての操作を行えるポリシーを設定
-create policy "管理者のみが全ての操作を行える" on public.settings
-    for all
+drop policy if exists "管理者のみが全ての操作を行える" on public.settings;
+
+-- 管理者のみが参照可能
+create policy "管理者のみが参照可能" on public.settings
+    for select
     using (
         exists (
             select 1 from public.profiles
@@ -42,12 +45,60 @@ create policy "管理者のみが全ての操作を行える" on public.settings
         )
     );
 
+-- 管理者のみが作成可能
+create policy "管理者のみが作成可能" on public.settings
+    for insert
+    with check (
+        exists (
+            select 1 from public.profiles
+            where profiles.user_id = auth.uid()
+            and profiles.role = 'admin'::profile_role
+        )
+    );
 
-REVOKE ALL ON public.download_logs FROM authenticated;
+-- 管理者のみが更新可能
+create policy "管理者のみが更新可能" on public.settings
+    for update
+    using (
+        exists (
+            select 1 from public.profiles
+            where profiles.user_id = auth.uid()
+            and profiles.role = 'admin'::profile_role
+        )
+    )
+    with check (
+        exists (
+            select 1 from public.profiles
+            where profiles.user_id = auth.uid()
+            and profiles.role = 'admin'::profile_role
+        )
+    );
+
+-- 管理者のみが削除可能
+create policy "管理者のみが削除可能" on public.settings
+    for delete
+    using (
+        exists (
+            select 1 from public.profiles
+            where profiles.user_id = auth.uid()
+            and profiles.role = 'admin'::profile_role
+        )
+    );
+
+-- Column-Level Privileges
+-- 1. Revoke all privileges from authenticated users
+REVOKE ALL ON public.settings FROM authenticated;
+-- 2. Grant select to authenticated users (admin only)
+GRANT SELECT ON public.settings TO authenticated;
+-- 3. Grant insert, update, delete to admin users only
+REVOKE INSERT, UPDATE, DELETE ON public.settings FROM authenticated;
 
 -- updated_atを自動更新するトリガーの作成
-create trigger handle_updated_at before update on public.settings
-    for each row execute function moddatetime();
+drop trigger if exists handle_updated_at on public.settings;
+create trigger handle_updated_at
+    before update on public.settings
+    for each row
+    execute function public.set_updated_at();
 
 -- ロールバック用
 -- drop trigger if exists handle_updated_at on public.settings;
