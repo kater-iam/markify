@@ -26,6 +26,7 @@ import { DownloadLogsList, DownloadLogsCreate, DownloadLogsEdit, DownloadLogsSho
 import { ImagePage } from "./pages/ImagePage";
 import { WatermarkSettings } from "./pages/settings/watermark";
 import { GeminiApiSettings } from "./pages/settings/gemini-api";
+import { LoginPage } from "./pages/login";
 
 function App() {
   return (
@@ -91,17 +92,7 @@ function App() {
                 <Routes>
                   <Route
                     path="/login"
-                    element={
-                      <AuthPage
-                        type="login"
-                        formProps={{
-                          initialValues: {
-                            email: "admin@kater.jp",
-                            password: "password123",
-                          },
-                        }}
-                      />
-                    }
+                    element={<LoginPage />}
                   />
                   <Route
                     element={
