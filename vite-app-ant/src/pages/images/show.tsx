@@ -1,22 +1,41 @@
 import React, { useState, useEffect } from "react";
-import { useShow } from "@refinedev/core";
-import { Show } from "@refinedev/antd";
-import { Typography, Space, Card, Descriptions, Image, Spin, message } from "antd";
-import { useParams } from "react-router-dom";
+import { useShow, useDelete } from "@refinedev/core";
+import { Show, DeleteButton } from "@refinedev/antd";
+import { Typography, Space, Card, Descriptions, Image, Spin, message, Button } from "antd";
+import { useParams, useNavigate } from "react-router-dom";
 import { supabaseClient } from "../../utility";
+import { DownloadOutlined } from "@ant-design/icons";
+import { useUserRole } from "../../utility/hooks/useUserRole";
 
 const { Title } = Typography;
 
 export const ImagesShow: React.FC = () => {
+  const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { queryResult } = useShow({
     resource: "images",
   });
+  const { mutate: deleteImage } = useDelete();
+  const { isAdmin, isLoading: isRoleLoading } = useUserRole();
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const { data, isLoading } = queryResult;
   const record = data?.data;
+
+  const handleDelete = async () => {
+    try {
+      await deleteImage({
+        resource: "images",
+        id: id as string,
+        mutationMode: "pessimistic",
+      });
+      message.success("画像を削除しました");
+      navigate("/images");
+    } catch (error) {
+      message.error("画像の削除に失敗しました");
+    }
+  };
 
   const fetchWatermarkedImage = async () => {
     if (!id) return;
@@ -57,9 +76,24 @@ export const ImagesShow: React.FC = () => {
     }
   };
 
+  const handleDownload = async () => {
+    if (!imageUrl || !record?.original_filename) return;
+
+    try {
+      const link = document.createElement('a');
+      link.href = imageUrl;
+      link.download = record.original_filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error("Error downloading image:", error);
+      message.error("ダウンロードに失敗しました");
+    }
+  };
+
   useEffect(() => {
     fetchWatermarkedImage();
-    // クリーンアップ関数
     return () => {
       if (imageUrl) {
         URL.revokeObjectURL(imageUrl);
@@ -67,10 +101,37 @@ export const ImagesShow: React.FC = () => {
     };
   }, [id]);
 
+  const headerButtons = [
+    <Button
+      key="download"
+      type="primary"
+      icon={<DownloadOutlined />}
+      onClick={handleDownload}
+      disabled={!imageUrl}
+    >
+      ダウンロード
+    </Button>,
+    isAdmin && (
+      <DeleteButton
+        key="delete"
+        resource="images"
+        recordItemId={id}
+        onSuccess={() => {
+          message.success("画像を削除しました");
+          navigate("/images");
+        }}
+        mutationMode="pessimistic"
+      />
+    ),
+  ].filter(Boolean);
+
   return (
-    <Show isLoading={isLoading}>
+    <Show 
+      isLoading={isLoading || isRoleLoading}
+      headerButtons={headerButtons}
+    >
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
-      <Card>
+        <Card>
           {loading ? (
             <div style={{ textAlign: 'center', padding: '20px' }}>
               <Spin />
@@ -82,7 +143,8 @@ export const ImagesShow: React.FC = () => {
               style={{ maxWidth: '100%' }}
             />
           ) : null}
-        </Card>        <Card>
+        </Card>
+        <Card>
           <Title level={5}>画像情報</Title>
           <Descriptions column={1}>
             <Descriptions.Item label="ファイル名">{record?.name}</Descriptions.Item>
@@ -95,8 +157,6 @@ export const ImagesShow: React.FC = () => {
             </Descriptions.Item>
           </Descriptions>
         </Card>
-
-
       </Space>
     </Show>
   );
