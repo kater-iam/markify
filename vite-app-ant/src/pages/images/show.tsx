@@ -1,58 +1,134 @@
-import React from "react";
-import { useShow, useOne } from "@refinedev/core";
-import {
-    Show,
-    TagField,
-    TextField,
-    ImageField,
-    NumberField,
-    DateField,
-} from "@refinedev/antd";
-import { Typography } from "antd";
+import React, { useState, useEffect } from "react";
+import { useShow } from "@refinedev/core";
+import { Show } from "@refinedev/antd";
+import { Typography, Space, Card, Image, Spin, message, Button, Descriptions } from "antd";
+import { useParams, useNavigate } from "react-router-dom";
+import { supabaseClient } from "../../utility";
+import { DownloadOutlined, DeleteOutlined } from "@ant-design/icons";
+import { DeleteButton } from "@refinedev/antd";
 
 const { Title } = Typography;
 
 export const ImagesShow = () => {
+    const navigate = useNavigate();
+    const { id } = useParams<{ id: string }>();
     const { query } = useShow();
     const { data, isLoading } = query;
-
     const record = data?.data;
 
-    const { data: profileData, isLoading: profileIsLoading } = useOne({
-        resource: "profiles",
-        id: record?.profile_id || "",
-        queryOptions: {
-            enabled: !!record,
-        },
-    });
+    const [imageUrl, setImageUrl] = useState<string | null>(null);
+    const [loading, setLoading] = useState(false);
+
+    const fetchWatermarkedImage = async () => {
+        if (!record?.id) return;
+        try {
+            setLoading(true);
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session?.access_token) {
+                throw new Error("認証情報が不足しています");
+            }
+            const response = await fetch(
+                `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/watermark-image/${record.id}`,
+                {
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${session.access_token}`,
+                        "Content-Type": "application/json",
+                        apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+                    },
+                }
+            );
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || `画像の取得に失敗しました: ${response.status}`);
+            }
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            setImageUrl(url);
+        } catch (error) {
+            console.error("Error fetching watermarked image:", error);
+            message.error(error instanceof Error ? error.message : "画像の取得に失敗しました");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDownload = async () => {
+        if (!imageUrl || !record?.original_filename) return;
+        try {
+            const link = document.createElement('a');
+            link.href = imageUrl;
+            link.download = record.original_filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } catch (error) {
+            console.error("Error downloading image:", error);
+            message.error("ダウンロードに失敗しました");
+        }
+    };
+
+    useEffect(() => {
+        fetchWatermarkedImage();
+        return () => {
+            if (imageUrl) {
+                URL.revokeObjectURL(imageUrl);
+            }
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [record?.id]);
+
+    const headerButtons = [
+        <Button
+            key="download"
+            type="primary"
+            icon={<DownloadOutlined />}
+            onClick={handleDownload}
+            disabled={!imageUrl}
+        >
+            ダウンロード
+        </Button>,
+        <DeleteButton
+            key="delete"
+            resource="images"
+            recordItemId={record?.id}
+            onSuccess={() => {
+                message.success("画像を削除しました");
+                navigate("/images");
+            }}
+            mutationMode="pessimistic"
+            icon={<DeleteOutlined />}
+        />,
+    ];
 
     return (
-        <Show isLoading={isLoading}>
-            <Title level={5}>Id</Title>
-            <TextField value={record?.id} />
-            <Title level={5}>Profile</Title>
-            {profileIsLoading ? (
-                <>Loading...</>
-            ) : (
-                <>{profileData?.data?.first_name}</>
-            )}
-            <Title level={5}>File Path</Title>
-            <ImageField style={{ maxWidth: 200 }} value={record?.file_path} />
-            <Title level={5}>Original Filename</Title>
-            <ImageField
-                style={{ maxWidth: 200 }}
-                value={record?.original_filename}
-            />
-            <Title level={5}>Name</Title>
-            <TextField value={record?.name} />
-            <Title level={5}>Width</Title>
-            <NumberField value={record?.width ?? ""} />
-            <Title level={5}>Height</Title>
-            <NumberField value={record?.height ?? ""} />
-            <Title level={5}>Created At</Title>
-            <DateField value={record?.created_at} />
-            <Title level={5}>Updated At</Title>
-            <DateField value={record?.updated_at} />
+        <Show isLoading={isLoading} headerButtons={headerButtons}>
+            <Space direction="vertical" size="large" style={{ width: '100%' }}>
+                <Card>
+                    {loading ? (
+                        <div style={{ textAlign: 'center', padding: '20px' }}>
+                            <Spin />
+                        </div>
+                    ) : imageUrl ? (
+                        <Image
+                            src={imageUrl}
+                            alt="Watermarked image"
+                            style={{ maxWidth: '100%' }}
+                        />
+                    ) : null}
+                </Card>
+                <Card>
+                    <Title level={5}>画像情報</Title>
+                    <Descriptions column={1}>
+                        <Descriptions.Item label="ファイル名">{record?.name}</Descriptions.Item>
+                        <Descriptions.Item label="オリジナルファイル名">{record?.original_filename}</Descriptions.Item>
+                        <Descriptions.Item label="サイズ">{record?.width}x{record?.height}</Descriptions.Item>
+                        <Descriptions.Item label="作成日時">
+                            {record?.created_at && new Date(record.created_at).toLocaleDateString("ja-JP", { year: "numeric", month: "2-digit", day: "2-digit" }).replace(/\//g, '年').replace('年', '年').replace('年', '月').replace('月', '月').replace('日', '日')}
+                        </Descriptions.Item>
+                    </Descriptions>
+                </Card>
+            </Space>
         </Show>
     );
 };

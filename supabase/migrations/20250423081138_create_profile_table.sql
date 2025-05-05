@@ -35,40 +35,37 @@ CREATE TRIGGER trg_profiles_updated_at
   BEFORE UPDATE ON public.profiles
   FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 
--- 5. Enable Row Level Security
+
+-- 5. 管理者判定用の関数を作成
+CREATE OR REPLACE FUNCTION public.is_admin()
+  RETURNS boolean
+  LANGUAGE sql
+  SECURITY DEFINER   -- これで RLS の束縛外で実行される
+AS $$
+  SELECT role = 'admin'::profile_role
+    FROM public.profiles
+   WHERE user_id = auth.uid();
+$$;
+
+-- 6. Enable Row Level Security
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
--- 6. RLS Policies
--- 6.1 SELECT: all authenticated users can view all profiles
+-- 7. RLS Policies
+-- 7.1 SELECT: all authenticated users can view all profiles
 CREATE POLICY profiles_select ON public.profiles
   FOR SELECT
   TO authenticated
   USING (true);
 
--- 6.2 INSERT: only admin
-CREATE POLICY profiles_insert ON public.profiles
-  FOR INSERT
-  TO authenticated
-  WITH CHECK (auth.role() = 'admin');
-
--- 6.3 UPDATE: row-level by role
-CREATE POLICY profiles_update ON public.profiles
-  FOR UPDATE
-  TO authenticated
-  USING (
-    auth.role() = 'admin'
-    OR user_id = auth.uid()
+CREATE POLICY "Admins can do anything" ON public.profiles
+FOR ALL
+TO authenticated
+ USING (
+    is_admin()
   )
   WITH CHECK (
-    auth.role() = 'admin'
-    OR user_id = auth.uid()
+    is_admin()
   );
-
--- 6.4 DELETE: only admin
-CREATE POLICY profiles_delete ON public.profiles
-  FOR DELETE
-  TO authenticated
-  USING (auth.role() = 'admin');
 
 -- 7. Column-Level Privileges
 -- 7.1 Revoke all privileges from authenticated users
