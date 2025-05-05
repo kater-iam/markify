@@ -258,6 +258,39 @@ describe('RLS Policies Tests', () => {
         });
       expect(error).not.toBeNull();
     });
+
+    it('管理者ユーザーは画像を削除でき、削除後にレコードが消えていることを確認する', async () => {
+      // まず画像を新規作成
+      const { data: newImage, error: insertError } = await adminClient
+        .from('images')
+        .insert({
+          profile_id: testProfileId,
+          file_path: `/test/delete-test-${Date.now()}.jpg`,
+          original_filename: `delete-test-${Date.now()}.jpg`,
+          name: 'Delete Test Image',
+          width: 123,
+          height: 456
+        })
+        .select()
+        .single();
+      expect(insertError).toBeNull();
+      expect(newImage).toBeDefined();
+
+      // 削除実行
+      const { error: deleteError } = await adminClient
+        .from('images')
+        .delete()
+        .eq('id', newImage.id);
+      expect(deleteError).toBeNull();
+
+      // 削除後に本当に消えているか確認
+      const { data: afterDelete, error: selectError } = await adminClient
+        .from('images')
+        .select('*')
+        .eq('id', newImage.id);
+      expect(selectError).toBeNull();
+      expect(afterDelete).toHaveLength(0);
+    });
   });
 
   describe('download_logs テーブル', () => {

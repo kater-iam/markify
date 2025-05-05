@@ -20,21 +20,12 @@ CREATE POLICY images_select ON public.images
   TO authenticated
   USING (true);
 
--- INSERT: only admin
-CREATE POLICY images_insert ON public.images
-  FOR INSERT
-  TO authenticated
-  WITH CHECK (auth.role() = 'admin');
-
--- UPDATE: only admin
-CREATE POLICY images_update ON public.images
-  FOR UPDATE
-  TO authenticated
-  USING (auth.role() = 'admin')
-  WITH CHECK (auth.role() = 'admin');
-
--- DELETE: only admin
-CREATE POLICY images_delete ON public.images
-  FOR DELETE
-  TO authenticated
-  USING (auth.role() = 'admin');
+CREATE POLICY "Admins can do anything" ON public.images
+FOR ALL
+TO authenticated
+ USING (
+    is_admin()
+  )
+  WITH CHECK (
+    is_admin()
+  );
