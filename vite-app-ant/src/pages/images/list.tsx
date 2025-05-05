@@ -1,98 +1,62 @@
 import React from "react";
-import { useTable, useNavigation } from "@refinedev/core";
-import { List, Table, Space, Button } from "antd";
-import { EyeOutlined } from "@ant-design/icons";
-import { BaseRecord } from "@refinedev/core";
+import { BaseRecord, useMany } from "@refinedev/core";
+import {
+    useTable,
+    List,
+    EditButton,
+    ShowButton,
+    DeleteButton,
+    ImageField,
+    DateField,
+} from "@refinedev/antd";
+import { Table, Space } from "antd";
 
-export const ImagesList: React.FC = () => {
-  const { tableQueryResult, current, pageSize, setCurrent, setPageSize } = useTable({
-    resource: "images",
-    syncWithLocation: true,
-    pagination: {
-      pageSize: 10,
-    },
-  });
+export const ImagesList = () => {
+    const { tableProps } = useTable({
+        syncWithLocation: true,
+    });
 
-  const { show } = useNavigation();
+    const { data: profileData, isLoading: profileIsLoading } = useMany({
+        resource: "profiles",
+        ids: tableProps?.dataSource?.map((item) => item?.profile_id) ?? [],
+        queryOptions: {
+            enabled: !!tableProps?.dataSource,
+        },
+    });
 
-  const columns = [
-    {
-      title: "ファイル名",
-      dataIndex: "name",
-      key: "name",
-      render: (text: string, record: BaseRecord) => (
-        <a onClick={() => record.id && show("images", record.id)}>{text}</a>
-      ),
-    },
-    {
-      title: "オリジナルファイル名",
-      dataIndex: "original_filename",
-      key: "original_filename",
-      render: (text: string, record: BaseRecord) => (
-        <a onClick={() => record.id && show("images", record.id)}>{text}</a>
-      ),
-    },
-    {
-      title: "サイズ",
-      key: "size",
-      render: (record: any) => (
-        <a onClick={() => record.id && show("images", record.id)}>
-          {record.width}x{record.height}
-        </a>
-      ),
-    },
-    {
-      title: "作成日時",
-      dataIndex: "created_at",
-      key: "created_at",
-      render: (value: string, record: BaseRecord) => (
-        <a onClick={() => record.id && show("images", record.id)}>
-          {new Date(value).toLocaleString("ja-JP", {
-            timeZone: "Asia/Tokyo",
-          })}
-        </a>
-      ),
-    },
-    {
-      title: "アクション",
-      key: "actions",
-      render: (record: BaseRecord) => (
-        <Space>
-          <Button
-            type="primary"
-            size="small"
-            icon={<EyeOutlined />}
-            onClick={() => record.id && show("images", record.id)}
-          >
-            表示
-          </Button>
-        </Space>
-      ),
-    },
-  ];
-
-  return (
-    <List>
-      <Table
-        dataSource={tableQueryResult.data?.data}
-        rowKey="id"
-        columns={columns}
-        onRow={(record) => ({
-          onClick: () => record.id && show("images", record.id),
-          style: { cursor: 'pointer' }
-        })}
-        pagination={{
-          current: current,
-          pageSize: pageSize,
-          total: tableQueryResult.data?.total,
-          onChange: (page, pageSize) => {
-            setCurrent(page);
-            setPageSize(pageSize);
-          },
-          showSizeChanger: true,
-          showTotal: (total) => `全 ${total} 件`,
-        }}
-      />
-    </List>
-  );
+    return (
+        <List>
+            <Table {...tableProps} rowKey="id">
+                <Table.Column dataIndex="name" title="Name" />
+                <Table.Column
+                    dataIndex={["created_at"]}
+                    title="Created At"
+                    render={(value: any) => <DateField value={value} />}
+                />
+                <Table.Column
+                    title="Actions"
+                    dataIndex="actions"
+                    render={(_, record: BaseRecord) => (
+                        <Space>
+                            <EditButton
+                                hideText
+                                size="small"
+                                recordItemId={record.id}
+                            />
+                            <ShowButton
+                                hideText
+                                size="small"
+                                recordItemId={record.id}
+                            />
+                            <DeleteButton
+                                hideText
+                                size="small"
+                                recordItemId={record.id}
+                            />
+                        </Space>
+                    )}
+                />
+            </Table>
+        </List>
+    );
 };

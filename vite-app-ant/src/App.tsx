@@ -25,12 +25,11 @@ import { ProfilesList, ProfilesCreate, ProfilesEdit, ProfilesShow } from "./page
 import { DownloadLogsList, DownloadLogsCreate, DownloadLogsEdit, DownloadLogsShow } from "./pages/download_logs";
 import { ImagePage } from "./pages/ImagePage";
 import { WatermarkSettings } from "./pages/settings/watermark";
-import { GeminiApiSettings } from "./pages/settings/gemini-api";
 import { LoginPage } from "./pages/login";
 
 function App() {
   return (
-    <BrowserRouter>
+    (<BrowserRouter>
       <GitHubBanner />
       <RefineKbarProvider>
         <ColorModeContextProvider>
@@ -42,46 +41,47 @@ function App() {
                 authProvider={authProvider}
                 routerProvider={routerBindings}
                 notificationProvider={useNotificationProvider}
-                resources={[
-                  {
-                    name: "images",
-                    list: "/images",
-                    create: "/images/create",
-                    edit: "/images/edit/:id",
-                    show: "/images/show/:id",
-                    meta: {
-                      canDelete: true,
-                    },
+                resources={[{
+                  name: "images",
+                  list: "/images",
+                  create: "/images/create",
+                  edit: "/images/edit/:id",
+                  show: "/images/show/:id",
+                  meta: {
+                    canDelete: true,
                   },
-                  {
-                    name: "profiles",
-                    list: "/profiles",
-                    create: "/profiles/create",
-                    edit: "/profiles/edit/:id", 
-                    show: "/profiles/show/:id",
-                    meta: {
-                      canDelete: true,
-                    },
+                }, {
+                  name: "profiles",
+                  list: "/profiles",
+                  create: "/profiles/create",
+                  edit: "/profiles/edit/:id", 
+                  show: "/profiles/show/:id",
+                  meta: {
+                    canDelete: true,
                   },
-                  {
-                    name: "download_logs",
-                    list: "/download_logs",
-                    create: "/download_logs/create",
-                    edit: "/download_logs/edit/:id",
-                    show: "/download_logs/show/:id",
-                    meta: {
-                      canDelete: true,
-                    },
+                }, {
+                  name: "download_logs",
+                  list: "/download_logs",
+                  create: "/download_logs/create",
+                  edit: "/download_logs/edit/:id",
+                  show: "/download_logs/show/:id",
+                  meta: {
+                    canDelete: true,
                   },
-                  {
-                    name: "settings",
-                    meta: {
-                      label: "設定",
-                      icon: <SettingOutlined />,
-                    },
-                    list: "/settings/watermark",
+                }, {
+                  name: "settings",
+                  meta: {
+                    label: "設定",
+                    icon: <SettingOutlined />,
                   },
-                ]}
+                  list: "/settings/watermark",
+                }, {
+                  name: "images",
+                  list: "/images",
+                  create: "/images/create",
+                  edit: "/images/edit/:id",
+                  show: "/images/show/:id"
+                }]}
                 options={{
                   syncWithLocation: true,
                   warnWhenUnsavedChanges: true,
@@ -131,7 +131,6 @@ function App() {
                     <Route path="/settings">
                       <Route index element={<Navigate to="/settings/watermark" />} />
                       <Route path="watermark" element={<WatermarkSettings />} />
-                      <Route path="gemini-api" element={<GeminiApiSettings />} />
                     </Route>
                     <Route path="/" element={<Navigate to="/images" />} />
                   </Route>
@@ -145,7 +144,7 @@ function App() {
           </AntdApp>
         </ColorModeContextProvider>
       </RefineKbarProvider>
-    </BrowserRouter>
+    </BrowserRouter>)
   );
 }
 
