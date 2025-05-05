@@ -30,7 +30,7 @@ export const ImagesList = () => {
                 <Table.Column dataIndex="name" title="Name" />
                 <Table.Column
                     dataIndex={["created_at"]}
-                    title="Created At"
+                    title=""
                     render={(value: any) => <DateField value={value} />}
                 />
                 <Table.Column
