@@ -20,8 +20,8 @@ describe('RLS Policies Tests', () => {
   beforeAll(async () => {
     try {
       // テストユーザーのメールアドレスを生成
-      testEmail = `test-${Date.now()}@example.com`;
-      adminEmail = `admin-${Date.now()}@example.com`;
+      testEmail = `test-${Date.now()}-${Math.floor(Math.random() * 100000)}@example.com`;
+      adminEmail = `admin-${Date.now()}-${Math.floor(Math.random() * 100000)}@example.com`;
 
       // サービスロールクライアントの設定（テストユーザー作成用）
       serviceRoleClient = createClient(
@@ -36,6 +36,15 @@ describe('RLS Policies Tests', () => {
         }
       );
 
+      // 既存のadminユーザーがいれば削除
+      try {
+        const { data: userList } = await serviceRoleClient.auth.admin.listUsers();
+        const existingAdmin = userList?.users.find(u => u.email === adminEmail);
+        if (existingAdmin?.id) {
+          await serviceRoleClient.auth.admin.deleteUser(existingAdmin.id);
+        }
+      } catch (e) {}
+
       // 管理者ユーザーの作成
       const { data: adminAuthUser, error: adminAuthError } = await serviceRoleClient.auth.admin.createUser({
         email: adminEmail,
@@ -45,19 +54,14 @@ describe('RLS Policies Tests', () => {
       if (adminAuthError) throw adminAuthError;
       adminUserId = adminAuthUser.user.id;
 
-      // 管理者プロファイルの作成
-      const { data: adminProfile, error: adminProfileError } = await serviceRoleClient
-        .from('profiles')
-        .insert({
-          user_id: adminUserId,
-          code: `admin${Date.now() % 1000000}`,
-          first_name: 'Admin',
-          last_name: 'User',
-          role: 'admin'
-        })
-        .select()
-        .single();
-      if (adminProfileError) throw adminProfileError;
+      // 既存のテストユーザーがいれば削除
+      try {
+        const { data: userList } = await serviceRoleClient.auth.admin.listUsers();
+        const existingUser = userList?.users.find(u => u.email === testEmail);
+        if (existingUser?.id) {
+          await serviceRoleClient.auth.admin.deleteUser(existingUser.id);
+        }
+      } catch (e) {}
 
       // 一般ユーザーの作成
       const { data: authUser, error: authError } = await serviceRoleClient.auth.admin.createUser({
@@ -257,6 +261,39 @@ describe('RLS Policies Tests', () => {
           height: 200
         });
       expect(error).not.toBeNull();
+    });
+
+    it('管理者ユーザーは画像を削除でき、削除後にレコードが消えていることを確認する', async () => {
+      // まず画像を新規作成
+      const { data: newImage, error: insertError } = await adminClient
+        .from('images')
+        .insert({
+          profile_id: testProfileId,
+          file_path: `/test/delete-test-${Date.now()}.jpg`,
+          original_filename: `delete-test-${Date.now()}.jpg`,
+          name: 'Delete Test Image',
+          width: 123,
+          height: 456
+        })
+        .select()
+        .single();
+      expect(insertError).toBeNull();
+      expect(newImage).toBeDefined();
+
+      // 削除実行
+      const { error: deleteError } = await adminClient
+        .from('images')
+        .delete()
+        .eq('id', newImage.id);
+      expect(deleteError).toBeNull();
+
+      // 削除後に本当に消えているか確認
+      const { data: afterDelete, error: selectError } = await adminClient
+        .from('images')
+        .select('*')
+        .eq('id', newImage.id);
+      expect(selectError).toBeNull();
+      expect(afterDelete).toHaveLength(0);
     });
   });
 

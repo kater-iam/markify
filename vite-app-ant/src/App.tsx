@@ -18,6 +18,7 @@ import authProvider from "./authProvider";
 import { ColorModeContextProvider } from "./contexts/color-mode";
 import { supabaseClient } from "./utility";
 import { Header } from "./components/header";
+import { useUserRole } from "./utility/hooks/useUserRole";
 
 // リソースコンポーネントのインポート
 import { ImagesList, ImagesCreate, ImagesEdit, ImagesShow } from "./pages/images";
@@ -25,12 +26,14 @@ import { ProfilesList, ProfilesCreate, ProfilesEdit, ProfilesShow } from "./page
 import { DownloadLogsList, DownloadLogsCreate, DownloadLogsEdit, DownloadLogsShow } from "./pages/download_logs";
 import { ImagePage } from "./pages/ImagePage";
 import { WatermarkSettings } from "./pages/settings/watermark";
-import { GeminiApiSettings } from "./pages/settings/gemini-api";
 import { LoginPage } from "./pages/login";
 
 function App() {
+  // 管理者判定
+  const { isAdmin } = useUserRole();
+
   return (
-    <BrowserRouter>
+    (<BrowserRouter>
       <GitHubBanner />
       <RefineKbarProvider>
         <ColorModeContextProvider>
@@ -49,38 +52,34 @@ function App() {
                     create: "/images/create",
                     edit: "/images/edit/:id",
                     show: "/images/show/:id",
-                    meta: {
-                      canDelete: true,
-                    },
+                    meta: { canDelete: true },
                   },
                   {
                     name: "profiles",
                     list: "/profiles",
                     create: "/profiles/create",
-                    edit: "/profiles/edit/:id", 
+                    edit: "/profiles/edit/:id",
                     show: "/profiles/show/:id",
-                    meta: {
-                      canDelete: true,
-                    },
+                    meta: { canDelete: true },
                   },
-                  {
-                    name: "download_logs",
-                    list: "/download_logs",
-                    create: "/download_logs/create",
-                    edit: "/download_logs/edit/:id",
-                    show: "/download_logs/show/:id",
-                    meta: {
-                      canDelete: true,
+                  // 管理者メニューは一般ユーザーには一切表示されません
+                  ...(isAdmin ? [
+                    {
+                      name: "download_logs",
+                      list: "/download_logs",
+                      create: "/download_logs/create",
+                      edit: "/download_logs/edit/:id",
+                      show: "/download_logs/show/:id",
+                      meta: { canDelete: true },
+                      options: { group: "管理者メニュー" },
                     },
-                  },
-                  {
-                    name: "settings",
-                    meta: {
-                      label: "設定",
-                      icon: <SettingOutlined />,
+                    {
+                      name: "settings",
+                      meta: { label: "設定", icon: <SettingOutlined /> },
+                      list: "/settings/watermark",
+                      options: { group: "管理者メニュー" },
                     },
-                    list: "/settings/watermark",
-                  },
+                  ] : []),
                 ]}
                 options={{
                   syncWithLocation: true,
@@ -131,7 +130,6 @@ function App() {
                     <Route path="/settings">
                       <Route index element={<Navigate to="/settings/watermark" />} />
                       <Route path="watermark" element={<WatermarkSettings />} />
-                      <Route path="gemini-api" element={<GeminiApiSettings />} />
                     </Route>
                     <Route path="/" element={<Navigate to="/images" />} />
                   </Route>
@@ -145,7 +143,7 @@ function App() {
           </AntdApp>
         </ColorModeContextProvider>
       </RefineKbarProvider>
-    </BrowserRouter>
+    </BrowserRouter>)
   );
 }
 
