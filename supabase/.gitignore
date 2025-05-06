@@ -1,0 +1,15 @@
+# Supabase
+.branches
+.temp
+.DS_Store
+functions.log
+node_modules
+
+# dotenvx
+!functions/.env
+.env.keys
+.env.local
+.env.*.local
+
+# Build output
+dist/
