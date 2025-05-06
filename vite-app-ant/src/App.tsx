@@ -18,6 +18,7 @@ import authProvider from "./authProvider";
 import { ColorModeContextProvider } from "./contexts/color-mode";
 import { supabaseClient } from "./utility";
 import { Header } from "./components/header";
+import { useUserRole } from "./utility/hooks/useUserRole";
 
 // リソースコンポーネントのインポート
 import { ImagesList, ImagesCreate, ImagesEdit, ImagesShow } from "./pages/images";
@@ -28,6 +29,9 @@ import { WatermarkSettings } from "./pages/settings/watermark";
 import { LoginPage } from "./pages/login";
 
 function App() {
+  // 管理者判定
+  const { isAdmin } = useUserRole();
+
   return (
     (<BrowserRouter>
       <GitHubBanner />
@@ -41,47 +45,42 @@ function App() {
                 authProvider={authProvider}
                 routerProvider={routerBindings}
                 notificationProvider={useNotificationProvider}
-                resources={[{
-                  name: "images",
-                  list: "/images",
-                  create: "/images/create",
-                  edit: "/images/edit/:id",
-                  show: "/images/show/:id",
-                  meta: {
-                    canDelete: true,
+                resources={[
+                  {
+                    name: "images",
+                    list: "/images",
+                    create: "/images/create",
+                    edit: "/images/edit/:id",
+                    show: "/images/show/:id",
+                    meta: { canDelete: true },
                   },
-                }, {
-                  name: "profiles",
-                  list: "/profiles",
-                  create: "/profiles/create",
-                  edit: "/profiles/edit/:id", 
-                  show: "/profiles/show/:id",
-                  meta: {
-                    canDelete: true,
+                  {
+                    name: "profiles",
+                    list: "/profiles",
+                    create: "/profiles/create",
+                    edit: "/profiles/edit/:id",
+                    show: "/profiles/show/:id",
+                    meta: { canDelete: true },
                   },
-                }, {
-                  name: "download_logs",
-                  list: "/download_logs",
-                  create: "/download_logs/create",
-                  edit: "/download_logs/edit/:id",
-                  show: "/download_logs/show/:id",
-                  meta: {
-                    canDelete: true,
-                  },
-                }, {
-                  name: "settings",
-                  meta: {
-                    label: "設定",
-                    icon: <SettingOutlined />,
-                  },
-                  list: "/settings/watermark",
-                }, {
-                  name: "images",
-                  list: "/images",
-                  create: "/images/create",
-                  edit: "/images/edit/:id",
-                  show: "/images/show/:id"
-                }]}
+                  // 管理者メニューは一般ユーザーには一切表示されません
+                  ...(isAdmin ? [
+                    {
+                      name: "download_logs",
+                      list: "/download_logs",
+                      create: "/download_logs/create",
+                      edit: "/download_logs/edit/:id",
+                      show: "/download_logs/show/:id",
+                      meta: { canDelete: true },
+                      options: { group: "管理者メニュー" },
+                    },
+                    {
+                      name: "settings",
+                      meta: { label: "設定", icon: <SettingOutlined /> },
+                      list: "/settings/watermark",
+                      options: { group: "管理者メニュー" },
+                    },
+                  ] : []),
+                ]}
                 options={{
                   syncWithLocation: true,
                   warnWhenUnsavedChanges: true,
