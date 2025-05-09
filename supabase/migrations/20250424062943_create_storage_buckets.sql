@@ -1,3 +1,4 @@
+-- 本番環境では権限の問題で動かないのでコメントアウトして migration up を実行
 -- Migration: Create Storage Buckets for Image Management
 
 -- Enable Storage if not already enabled

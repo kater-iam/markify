@@ -2,7 +2,8 @@
   "name": "markify-supabase",
   "version": "1.0.0",
   "scripts": {
-    "seed:images": "tsx ./scripts/seed_images.ts",
+    "seed:images:local": "tsx ./scripts/seed_images.ts --env=.env.local",
+    "seed:images:production": "tsx ./scripts/seed_images.ts --env=.env.production",
     "clear:storage": "tsx ./scripts/clear_storage_bucket.ts",
     "test": "jest"
   },
