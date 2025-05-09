@@ -64,13 +64,8 @@ function getJapaneseName(filename: string): string {
 // コマンドライン引数でenvファイルを指定可能に
 const argv = minimist(process.argv.slice(2));
 const envPath: string | undefined = (argv as any).env;
-const profileIdArg: string | undefined = (argv as any)["profile-id"];
-const bucketArg: string | undefined = (argv as any)["bucket"];
-const SKIP_BUCKET_CREATE = (argv as any)["skip-bucket-create"] !== undefined ? Boolean((argv as any)["skip-bucket-create"]) : true; // デフォルトtrue
-
-// 必須引数チェック
-if (!envPath || !profileIdArg || !bucketArg) {
-  console.error(`\n[使い方]\n  npx tsx scripts/seed_images.ts --env=.env.production --profile-id=<PROFILE_ID> --bucket=<BUCKET> [--skip-bucket-create]\n\n  --env           : .envファイルのパス（例: .env.production）\n  --profile-id    : imagesテーブルに登録するprofile_id（UUID）\n  --bucket        : バケット名（例: original-images）\n  --skip-bucket-create : バケット作成をスキップ（本番は必須）\n`);
+if (!envPath) {
+  console.error(`\n[使い方]\n  npx tsx scripts/seed_images.ts --env=.env.production [--profile-id=<PROFILE_ID>] [--bucket=<BUCKET>] [--skip-bucket-create]\n\n  --env           : .envファイルのパス（例: .env.production）※必須\n  --profile-id    : imagesテーブルに登録するprofile_id（UUID）※省略時は.envから\n  --bucket        : バケット名（例: original-images）※省略時は.envから\n  --skip-bucket-create : バケット作成をスキップ（本番は必須）\n`);
   process.exit(1);
 }
 
@@ -78,8 +73,9 @@ dotenv.config({ path: envPath });
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const PROFILE_ID = profileIdArg;
-const BUCKET = bucketArg;
+const PROFILE_ID = (argv as any)["profile-id"] || process.env.PROFILE_ID || "00000000-0000-0000-0000-000000000001";
+const BUCKET = (argv as any)["bucket"] || process.env.BUCKET || "original-images";
+const SKIP_BUCKET_CREATE = (argv as any)["skip-bucket-create"] !== undefined ? Boolean((argv as any)["skip-bucket-create"]) : true; // デフォルトtrue
 
 // 画像ディレクトリのパス
 const STORAGE_DIR = path.join(process.cwd(), 'storage/original_images');
