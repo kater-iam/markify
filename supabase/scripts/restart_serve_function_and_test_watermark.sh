@@ -21,6 +21,7 @@ ACCESS_TOKEN=$(curl -s -X POST $(supabase status --output json | jq -r '.API_URL
   -d '{"email":"'${USER}'","password":"'${PASSWORD}'"}' | jq -r '.access_token')
 
 # 関数を叩く
+sleep 2;
 echo "画像処理を実行中..."
 curl -s -H "Authorization: Bearer $ACCESS_TOKEN" \
   http://localhost:54411/functions/v1/watermark-image/dd747cda-f330-4ebf-bfb6-5b50e341c7e9 \
