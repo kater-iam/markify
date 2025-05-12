@@ -9,13 +9,16 @@
  * - SUPABASE_SERVICE_ROLE_KEY: サービスロールキー
  * 
  * 使用方法:
- * ```bash
- * cd supabase
- * npx ts-node scripts/seed_images.ts
- * ```
+ *   # npm scriptを使う場合（推奨）
+ *   npm run seed:images:local
+ *   npm run seed:images:production -- --profile-id=xxxx --bucket=original-images
  * 
+ *   # 直接実行する場合
+ *   $(npm bin)/ts-node scripts/seed_images.ts --env=.env.local
+ *   $(npm bin)/ts-node scripts/seed_images.ts --env=.env.production --profile-id=xxxx --bucket=original-images
+ *
  * 処理内容:
- * 1. original_imagesバケットの存在確認（なければ作成）
+ * 1. original_imagesバケットの存在確認（なければ作成 or スキップ）
  * 2. 画像ファイルのアップロード
  * 3. 画像メタデータ（幅、高さ）の取得
  * 4. imagesテーブルへのデータ登録
@@ -26,6 +29,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as dotenv from 'dotenv';
 import sharp from 'sharp';
+import minimist from "minimist";
 
 // ファイル名パターンと日本語名のマッピング
 const patterns: { [key: string]: string } = {
@@ -60,7 +64,21 @@ function getJapaneseName(filename: string): string {
   return filename.split('.')[0]; // マッチするパターンがない場合はファイル名をそのまま使用
 }
 
-dotenv.config();
+// コマンドライン引数でenvファイルを指定可能に
+const argv = minimist(process.argv.slice(2));
+const envPath: string | undefined = (argv as any).env;
+if (!envPath) {
+  console.error(`\n[使い方]\n  npx tsx scripts/seed_images.ts --env=.env.production [--profile-id=<PROFILE_ID>] [--bucket=<BUCKET>] [--skip-bucket-create]\n\n  --env           : .envファイルのパス（例: .env.production）※必須\n  --profile-id    : imagesテーブルに登録するprofile_id（UUID）※省略時は.envから\n  --bucket        : バケット名（例: original-images）※省略時は.envから\n  --skip-bucket-create : バケット作成をスキップ（本番は必須）\n`);
+  process.exit(1);
+}
+
+dotenv.config({ path: envPath });
+
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const PROFILE_ID = (argv as any)["profile-id"] || process.env.PROFILE_ID || "00000000-0000-0000-0000-000000000001";
+const BUCKET = (argv as any)["bucket"] || process.env.BUCKET || "original-images";
+const SKIP_BUCKET_CREATE = (argv as any)["skip-bucket-create"] !== undefined ? Boolean((argv as any)["skip-bucket-create"]) : true; // デフォルトtrue
 
 // 画像ディレクトリのパス
 const STORAGE_DIR = path.join(process.cwd(), 'storage/original_images');
@@ -99,7 +117,7 @@ async function uploadImages(supabase: any) {
       const { width, height } = await getImageMetadata(localPath);
       
       const { error: uploadError } = await supabase.storage
-        .from('original_images')
+        .from(BUCKET)
         .upload(file, fileContent, {
           contentType: 'image/jpeg',
           upsert: true
@@ -111,12 +129,12 @@ async function uploadImages(supabase: any) {
       }
 
       // 画像情報をDBに保存
-      const { data: publicUrlData } = supabase.storage.from('original_images').getPublicUrl(file);
+      const { data: publicUrlData } = supabase.storage.from(BUCKET).getPublicUrl(file);
       
       const { error: dbError } = await supabase
         .from('images')
         .insert({
-          profile_id: '00000000-0000-0000-0000-000000000001',
+          profile_id: PROFILE_ID,
           file_path: file,
           original_filename: file,
           name: getJapaneseName(file),
@@ -139,8 +157,8 @@ async function uploadImages(supabase: any) {
 }
 
 async function main() {
-  const supabaseUrl = process.env.SUPABASE_URL || DEFAULT_SUPABASE_URL;
-  const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || DEFAULT_SERVICE_ROLE_KEY;
+  const supabaseUrl = SUPABASE_URL || DEFAULT_SUPABASE_URL;
+  const supabaseServiceRoleKey = SUPABASE_SERVICE_ROLE_KEY || DEFAULT_SERVICE_ROLE_KEY;
 
   // Supabaseクライアントの初期化
   const supabase = createClient(
@@ -158,18 +176,22 @@ async function main() {
     process.exit(1);
   }
 
-  const originalImagesBucket = buckets.find(b => b.name === 'original_images');
+  const originalImagesBucket = buckets.find(b => b.name === BUCKET);
   if (!originalImagesBucket) {
-    console.log('original_images bucket not found. Creating...');
-    const { error: createBucketError } = await supabase
-      .storage
-      .createBucket('original_images', { public: false });
-
-    if (createBucketError) {
-      console.error('Failed to create bucket:', createBucketError);
+    if (SKIP_BUCKET_CREATE) {
+      console.error(`${BUCKET} bucket not found. Please create it manually in Supabase Studio or run without --skip-bucket-create.`);
       process.exit(1);
+    } else {
+      console.log(`${BUCKET} bucket not found. Creating...`);
+      const { error: createBucketError } = await supabase
+        .storage
+        .createBucket(BUCKET, { public: false });
+      if (createBucketError) {
+        console.error('Failed to create bucket:', createBucketError);
+        process.exit(1);
+      }
+      console.log(`Successfully created ${BUCKET} bucket`);
     }
-    console.log('Successfully created original_images bucket');
   }
 
   try {

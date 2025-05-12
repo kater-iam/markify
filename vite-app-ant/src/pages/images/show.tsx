@@ -3,9 +3,9 @@ import { useShow } from "@refinedev/core";
 import { Show } from "@refinedev/antd";
 import { Typography, Space, Card, Image, Spin, message, Button, Descriptions } from "antd";
 import { useParams, useNavigate } from "react-router-dom";
-import { supabaseClient } from "../../utility";
 import { DownloadOutlined, DeleteOutlined } from "@ant-design/icons";
 import { DeleteButton } from "@refinedev/antd";
+import { supabaseClient } from "../../utility";
 
 const { Title } = Typography;
 
