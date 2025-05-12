@@ -24,7 +24,6 @@ import { useUserRole } from "./utility/hooks/useUserRole";
 import { ImagesList, ImagesCreate, ImagesEdit, ImagesShow } from "./pages/images";
 import { ProfilesList, ProfilesCreate, ProfilesEdit, ProfilesShow } from "./pages/profiles";
 import { DownloadLogsList, DownloadLogsCreate, DownloadLogsEdit, DownloadLogsShow } from "./pages/download_logs";
-import { ImagePage } from "./pages/ImagePage";
 import { WatermarkSettings } from "./pages/settings/watermark";
 import { LoginPage } from "./pages/login";
 
@@ -113,7 +112,7 @@ function App() {
                       <Route path="create" element={<ImagesCreate />} />
                       <Route path="edit/:id" element={<ImagesEdit />} />
                       <Route path="show/:id" element={<ImagesShow />} />
-                      <Route path="view/:id" element={<ImagePage />} />
+                      <Route path="view/:id" element={<ImagesShow />} />
                     </Route>
                     <Route path="/profiles">
                       <Route index element={<ProfilesList />} />

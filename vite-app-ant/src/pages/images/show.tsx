@@ -3,9 +3,9 @@ import { useShow } from "@refinedev/core";
 import { Show } from "@refinedev/antd";
 import { Typography, Space, Card, Image, Spin, message, Button, Descriptions } from "antd";
 import { useParams, useNavigate } from "react-router-dom";
-import { supabaseClient } from "../../utility";
 import { DownloadOutlined, DeleteOutlined } from "@ant-design/icons";
 import { DeleteButton } from "@refinedev/antd";
+import { supabaseClient } from "../../utility";
 
 const { Title } = Typography;
 
@@ -28,13 +28,12 @@ export const ImagesShow = () => {
                 throw new Error("認証情報が不足しています");
             }
             const response = await fetch(
-                `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/watermark-image/${record.id}`,
+                `${import.meta.env.VITE_API_URL}/api/v1/watermark-image/${record.id}`,
                 {
                     method: "GET",
                     headers: {
                         Authorization: `Bearer ${session.access_token}`,
                         "Content-Type": "application/json",
-                        apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
                     },
                 }
             );
