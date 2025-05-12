@@ -9,13 +9,16 @@
  * - SUPABASE_SERVICE_ROLE_KEY: サービスロールキー
  * 
  * 使用方法:
- * ```bash
- * cd supabase
- * npx ts-node scripts/seed_images.ts
- * ```
+ *   # npm scriptを使う場合（推奨）
+ *   npm run seed:images:local
+ *   npm run seed:images:production -- --profile-id=xxxx --bucket=original-images
  * 
+ *   # 直接実行する場合
+ *   $(npm bin)/ts-node scripts/seed_images.ts --env=.env.local
+ *   $(npm bin)/ts-node scripts/seed_images.ts --env=.env.production --profile-id=xxxx --bucket=original-images
+ *
  * 処理内容:
- * 1. original_imagesバケットの存在確認（なければ作成）
+ * 1. original_imagesバケットの存在確認（なければ作成 or スキップ）
  * 2. 画像ファイルのアップロード
  * 3. 画像メタデータ（幅、高さ）の取得
  * 4. imagesテーブルへのデータ登録
