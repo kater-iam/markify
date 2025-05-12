@@ -28,12 +28,13 @@ export const ImagesShow = () => {
                 throw new Error("認証情報が不足しています");
             }
             const response = await fetch(
-                `${import.meta.env.VITE_API_URL}/api/v1/watermark-image/${record.id}`,
+                `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/watermark-image/${record.id}`,
                 {
                     method: "GET",
                     headers: {
                         Authorization: `Bearer ${session.access_token}`,
                         "Content-Type": "application/json",
+                        apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
                     },
                 }
             );
