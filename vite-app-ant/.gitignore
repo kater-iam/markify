@@ -27,3 +27,4 @@ _.sln
 
 # Local環境の変数は秘匿情報がないのでGit管理する
 !.env.local
+!.env.production
