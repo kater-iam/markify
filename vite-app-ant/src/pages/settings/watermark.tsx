@@ -172,16 +172,6 @@ export const WatermarkSettings: React.FC = () => {
           >
             <Input type="color" style={{ width: '100px' }} />
           </Form.Item>
-
-          <Form.Item
-            name="spacing"
-            label="文字間隔 (px)"
-            rules={[{ required: true, message: '文字間隔を入力してください' }]}
-            tooltip="透かし文字の間隔をピクセル単位で指定します。大きくすると文字の重なりが減ります。"
-          >
-            <InputNumber min={50} max={500} style={{ width: '100%' }} />
-          </Form.Item>
-
           <Form.Item>
             <Button
                 type="primary"
@@ -196,4 +186,4 @@ export const WatermarkSettings: React.FC = () => {
       </Card>
     </div>
   );
-}; 
+};
