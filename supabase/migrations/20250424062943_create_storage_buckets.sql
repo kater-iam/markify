@@ -67,8 +67,6 @@ TO authenticated
   );
 
 
-
-
 -- 9. Create rollback function
 CREATE OR REPLACE FUNCTION storage.remove_buckets()
 RETURNS void AS $$

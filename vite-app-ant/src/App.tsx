@@ -53,14 +53,6 @@ function App() {
                     show: "/images/show/:id",
                     meta: { canDelete: true },
                   },
-                  {
-                    name: "profiles",
-                    list: "/profiles",
-                    create: "/profiles/create",
-                    edit: "/profiles/edit/:id",
-                    show: "/profiles/show/:id",
-                    meta: { canDelete: true },
-                  },
                   // 管理者メニューは一般ユーザーには一切表示されません
                   ...(isAdmin ? [
                     {
@@ -69,6 +61,14 @@ function App() {
                         label: "管理者限定",
                         icon: <TeamOutlined />
                       }
+                    },
+                    {
+                      name: "profiles",
+                      list: "/profiles",
+                      create: "/profiles/create",
+                      edit: "/profiles/edit/:id",
+                      show: "/profiles/show/:id",
+                      meta: { canDelete: true },
                     },
                     {
                       name: "download_logs",
