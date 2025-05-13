@@ -5,19 +5,19 @@ import dayjs from "dayjs";
 
 export const ProfilesEdit = () => {
     const { formProps, saveButtonProps, queryResult } = useForm();
-    
+
     // 現在選択されているロールを追跡する状態
     const [selectedRole, setSelectedRole] = useState<string | undefined>(
         formProps.initialValues?.role
     );
-    
+
     // 初期値が読み込まれたときにロールを設定
     useEffect(() => {
         if (formProps.initialValues?.role) {
             setSelectedRole(formProps.initialValues.role);
         }
     }, [formProps.initialValues]);
-    
+
     // ロールの選択肢
     const roleOptions = [
         { label: "管理者", value: "admin" },
@@ -84,34 +84,6 @@ export const ProfilesEdit = () => {
                         options={roleOptions}
                         onChange={(value) => setSelectedRole(value)}
                     />
-                </Form.Item>
-                <Form.Item
-                    label="作成日時"
-                    name={["created_at"]}
-                    rules={[
-                        {
-                            required: true,
-                        },
-                    ]}
-                    getValueProps={(value) => ({
-                        value: value ? dayjs(value) : undefined,
-                    })}
-                >
-                    <DatePicker />
-                </Form.Item>
-                <Form.Item
-                    label="更新日時"
-                    name={["updated_at"]}
-                    rules={[
-                        {
-                            required: true,
-                        },
-                    ]}
-                    getValueProps={(value) => ({
-                        value: value ? dayjs(value) : undefined,
-                    })}
-                >
-                    <DatePicker />
                 </Form.Item>
             </Form>
         </Edit>
