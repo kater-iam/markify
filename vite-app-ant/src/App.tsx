@@ -12,7 +12,7 @@ import routerBindings, {
 } from "@refinedev/react-router";
 import { dataProvider, liveProvider } from "@refinedev/supabase";
 import { App as AntdApp } from "antd";
-import { SettingOutlined } from "@ant-design/icons";
+import { SettingOutlined, TeamOutlined } from "@ant-design/icons";
 import { BrowserRouter, Route, Routes, Outlet, Navigate } from "react-router-dom";
 import authProvider from "./authProvider";
 import { ColorModeContextProvider } from "./contexts/color-mode";
@@ -63,6 +63,13 @@ function App() {
                   },
                   // 管理者メニューは一般ユーザーには一切表示されません
                   ...(isAdmin ? [
+                    {
+                      name: "admin",
+                      meta: {
+                        label: "管理者限定",
+                        icon: <TeamOutlined />
+                      }
+                    },
                     {
                       name: "download_logs",
                       list: "/download_logs",

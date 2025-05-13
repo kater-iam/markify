@@ -2,7 +2,7 @@
 CREATE TABLE public.images (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   profile_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  file_path text NOT NULL,
+  file_path text NOT NULL UNIQUE,
   original_filename text NOT NULL,
   name text NOT NULL,
   width integer NOT NULL,
