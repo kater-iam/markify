@@ -18,7 +18,7 @@ export const ProfilesList = () => {
     const { tableProps } = useTable<Profile>({
         syncWithLocation: true,
     });
-    
+
     // ロールに応じた色を返す関数
     const getRoleColor = (role?: string) => {
         switch (role) {
