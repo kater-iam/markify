@@ -44,6 +44,7 @@
   "scripts": {
     "dev": "refine dev",
     "build": "tsc && refine build",
+    "build:prod": "tsc && vite build --mode production",
     "start": "refine start",
     "refine": "refine",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",

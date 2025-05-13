@@ -57,33 +57,6 @@ CREATE POLICY profiles_select ON public.profiles
   TO authenticated
   USING (true);
 
--- 7.2 UPDATE: users can update their own profile
-CREATE POLICY profiles_update ON public.profiles
-  FOR UPDATE
-  TO authenticated
-  USING (
-    -- 管理者は全てのプロフィールを更新可能
-    is_admin()
-    OR
-    -- 一般ユーザーは自分のプロフィールのみ更新可能
-    (NOT is_admin() AND id IN (
-      SELECT id FROM public.profiles WHERE user_id = auth.uid()
-    ))
-  )
-  WITH CHECK (
-    -- 管理者は全てのプロフィールを更新可能
-    is_admin()
-    OR
-    -- 一般ユーザーは自分のプロフィールのみ更新可能（管理者ユーザーは除く）
-    (NOT is_admin()
-     AND id IN (
-       SELECT id FROM public.profiles
-       WHERE user_id = auth.uid()
-       AND role = 'general'::profile_role
-     )
-    )
-  );
-
 CREATE POLICY "Admins can do anything" ON public.profiles
 FOR ALL
 TO authenticated
