@@ -64,7 +64,7 @@ export const ImagesEdit = () => {
                     </Form.Item>
                 </Form.Item>
                 <Form.Item
-                    label="Name"
+                    label="ファイル名"
                     name={["name"]}
                     rules={[
                         {
