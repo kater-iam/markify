@@ -71,8 +71,8 @@ TO authenticated
 -- 7.1 Revoke all privileges from authenticated users
 REVOKE ALL ON public.profiles FROM authenticated;
 -- 7.2 Grant select to authenticated users
-GRANT SELECT ON public.profiles TO authenticated;
--- 7.3 Grant update on specific columns for authenticated users
-GRANT UPDATE (first_name, last_name) ON public.profiles TO authenticated;
+GRANT SELECT, INSERT ON public.profiles TO authenticated;
+-- 7.3 Grant update to authenticated users
+GRANT UPDATE ON public.profiles TO authenticated;
 
 -- End of Migration

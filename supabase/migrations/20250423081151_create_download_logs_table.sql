@@ -18,6 +18,12 @@ CREATE INDEX idx_logs_image_id ON public.download_logs(image_id);
 -- RLS for download_logs
 ALTER TABLE public.download_logs ENABLE ROW LEVEL SECURITY;
 
+
+-- Column-Level Privileges
+-- 1. Grant insert to authenticated users
+-- REVOKE ALL ON public.download_logs FROM authenticated; -- ここでRevokeするとRLSより先にPermission Deniedが発動する。
+GRANT INSERT, SELECT ON public.download_logs TO authenticated;
+
 CREATE POLICY "Admins can do anything" ON public.download_logs
 FOR ALL
 TO authenticated
@@ -44,8 +50,3 @@ CREATE TRIGGER trg_images_updated_at
 CREATE TRIGGER trg_download_logs_updated_at
   BEFORE UPDATE ON public.download_logs
   FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
-
--- Column-Level Privileges
--- 1. Grant insert to authenticated users
-REVOKE ALL ON public.download_logs FROM authenticated;
-GRANT INSERT ON public.download_logs TO authenticated;
