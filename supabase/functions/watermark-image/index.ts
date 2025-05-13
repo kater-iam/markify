@@ -24,7 +24,7 @@ interface ImageData {
 
 serve(async (req: Request) => {
   debug.log('Request received:', req.method, req.url);
-  
+
   // CORS用のプリフライトリクエスト対応
   if (req.method === 'OPTIONS') {
     debug.log('Handling OPTIONS request');
@@ -58,7 +58,7 @@ serve(async (req: Request) => {
     // JWTの検証
     const authHeader = req.headers.get('Authorization')
     debug.log('Auth header present:', !!authHeader);
-    
+
     if (!authHeader) {
       debug.log('No authorization header');
       return new Response(
@@ -174,10 +174,10 @@ serve(async (req: Request) => {
     debug.log('Image data retrieved:', imageData)
 
     // 3. ストレージからの画像取得
-    debug.log('Downloading image from storage...')
+    debug.log('Downloading image from storage...' + imageData.file_path)
     const { data: imageFile, error: storageError } = await serviceRoleClient
       .storage
-      .from('original_images')
+      .from('original-images')
       .download(`${imageData.file_path}`)
 
     if (storageError) {
@@ -194,7 +194,7 @@ serve(async (req: Request) => {
     debug.log('Converting image to array buffer...');
     const arrayBuffer = await imageFile.arrayBuffer()
     debug.log('Array buffer size:', arrayBuffer.byteLength);
-    
+
     debug.log('Processing image with watermark...');
     const processedImage = await addWatermark(arrayBuffer, {
       text: profile.code,
@@ -213,11 +213,11 @@ serve(async (req: Request) => {
     debug.log('Sending response...');
     return new Response(
       processedImage,
-      { 
+      {
         headers: {
           ...corsHeaders,
           'Content-Type': contentType,
-          'Cache-Control': 'public, max-age=3600'
+          'Cache-Control': 'no-cache'
         }
       }
     )
@@ -225,4 +225,4 @@ serve(async (req: Request) => {
   } catch (error: unknown) {
     return handleError(error);
   }
-}) 
+})

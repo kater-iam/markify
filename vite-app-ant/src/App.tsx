@@ -12,7 +12,7 @@ import routerBindings, {
 } from "@refinedev/react-router";
 import { dataProvider, liveProvider } from "@refinedev/supabase";
 import { App as AntdApp } from "antd";
-import { SettingOutlined } from "@ant-design/icons";
+import { SettingOutlined, TeamOutlined } from "@ant-design/icons";
 import { BrowserRouter, Route, Routes, Outlet, Navigate } from "react-router-dom";
 import authProvider from "./authProvider";
 import { ColorModeContextProvider } from "./contexts/color-mode";
@@ -24,7 +24,6 @@ import { useUserRole } from "./utility/hooks/useUserRole";
 import { ImagesList, ImagesCreate, ImagesEdit, ImagesShow } from "./pages/images";
 import { ProfilesList, ProfilesCreate, ProfilesEdit, ProfilesShow } from "./pages/profiles";
 import { DownloadLogsList, DownloadLogsCreate, DownloadLogsEdit, DownloadLogsShow } from "./pages/download_logs";
-import { ImagePage } from "./pages/ImagePage";
 import { WatermarkSettings } from "./pages/settings/watermark";
 import { LoginPage } from "./pages/login";
 
@@ -64,6 +63,13 @@ function App() {
                   },
                   // 管理者メニューは一般ユーザーには一切表示されません
                   ...(isAdmin ? [
+                    {
+                      name: "admin",
+                      meta: {
+                        label: "管理者限定",
+                        icon: <TeamOutlined />
+                      }
+                    },
                     {
                       name: "download_logs",
                       list: "/download_logs",
@@ -113,7 +119,7 @@ function App() {
                       <Route path="create" element={<ImagesCreate />} />
                       <Route path="edit/:id" element={<ImagesEdit />} />
                       <Route path="show/:id" element={<ImagesShow />} />
-                      <Route path="view/:id" element={<ImagePage />} />
+                      <Route path="view/:id" element={<ImagesShow />} />
                     </Route>
                     <Route path="/profiles">
                       <Route index element={<ProfilesList />} />

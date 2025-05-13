@@ -4,6 +4,7 @@ import { Form, Input, Select, Upload, DatePicker } from "antd";
 import dayjs from "dayjs";
 import { supabaseClient } from "../../utility/supabaseClient";
 import { useGetIdentity } from "@refinedev/core";
+import { v4 as uuidv4 } from 'uuid';
 const supabaseBucket = import.meta.env.VITE_SUPABASE_BUCKET;
 
 export const ImagesCreate = () => {
@@ -32,14 +33,18 @@ export const ImagesCreate = () => {
     const handleUpload = async (file: File) => {
         setUploading(true);
         const fileExt = file.name.split('.').pop();
-        const fileName = `${Date.now()}.${fileExt}`;
-        const filePath = `${fileName}`;
+        const imageId = uuidv4();
+        const filePath = `${imageId}.${fileExt}`;
         const { error } = await supabaseClient.storage.from(supabaseBucket).upload(filePath, file);
         setUploading(false);
         if (error) {
             return Promise.reject(error.message);
         }
-        formProps.form?.setFieldsValue({ file_path: filePath, original_filename: file.name });
+        formProps.form?.setFieldsValue({
+            id: imageId,
+            file_path: filePath,
+            original_filename: file.name
+        });
         // サムネイル: FileReaderでDataURL生成
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -58,6 +63,9 @@ export const ImagesCreate = () => {
     return (
         <Create saveButtonProps={saveButtonProps}>
             <Form {...formProps} layout="vertical">
+                <Form.Item name="id" style={{ display: "none" }}>
+                    <Input type="hidden" />
+                </Form.Item>
                 <Form.Item name="profile_id" style={{ display: "none" }}>
                     <Input type="hidden" />
                 </Form.Item>
@@ -97,7 +105,7 @@ export const ImagesCreate = () => {
                     {/* 自動項目の明示表示 */}
                     <div style={{ marginTop: 8, fontSize: 12, color: '#aaa' }}>
                         ファイル名: <span style={{ fontWeight: 'bold' }}>{formProps.form?.getFieldValue('original_filename') || '-'}</span><br />
-                        幅: <span style={{ fontWeight: 'bold' }}>{formProps.form?.getFieldValue('width') || '-'}</span> px　
+                        幅: <span style={{ fontWeight: 'bold' }}>{formProps.form?.getFieldValue('width') || '-'}</span> px
                         高さ: <span style={{ fontWeight: 'bold' }}>{formProps.form?.getFieldValue('height') || '-'}</span> px
                     </div>
                 </Form.Item>

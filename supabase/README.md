@@ -203,3 +203,101 @@ npx ts-node scripts/seed_images.ts
 # または、一括実行スクリプトを使用
 ./scripts/re_seed_images.sh
 ```
+
+# Markify バックエンド
+
+Supabaseを使用したバックエンドアプリケーション
+
+## 必要条件
+
+- Node.js 18以上
+- npm 9以上
+- Docker
+- Supabase CLI
+
+## セットアップ
+
+1. Supabase CLIのインストール
+```bash
+npm install -g supabase
+```
+
+2. 依存関係のインストール
+```bash
+npm install
+```
+
+3. 環境変数の設定
+`.env.local`ファイルを作成し、以下の環境変数を設定：
+```env
+SUPABASE_URL=http://127.0.0.1:54411
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU
+```
+
+## ローカル開発環境の起動
+
+1. Supabaseの起動
+```bash
+supabase start
+```
+
+2. データベースのマイグレーション
+```bash
+supabase db reset
+```
+
+## シードデータの投入
+
+1. テスト画像の生成
+```bash
+npx ts-node scripts/generate_seed_images.ts
+```
+
+2. 画像データの投入
+```bash
+npx ts-node scripts/seed_images.ts --env=.env.local
+```
+
+## ディレクトリ構造
+
+```
+supabase/
+  ├── migrations/     # データベースマイグレーションファイル
+  ├── seed/          # シードデータ
+  ├── scripts/       # ユーティリティスクリプト
+  └── functions/     # Edge Functions
+```
+
+## 主な機能
+
+1. データベース
+   - 画像メタデータの管理
+   - ダウンロードログの記録
+   - ユーザー認証情報の管理
+
+2. ストレージ
+   - オリジナル画像の保存
+   - ウォーターマーク付き画像の保存
+
+3. Edge Functions
+   - ウォーターマーク処理
+   - 画像の最適化
+
+## 開発ガイドライン
+
+1. データベース設計
+   - マイグレーションファイルは`migrations`ディレクトリに配置
+   - スキーマの変更は必ずマイグレーションファイルで管理
+
+2. ストレージ管理
+   - 画像ファイルはUUIDベースのファイル名を使用
+   - バケットのアクセス制御を適切に設定
+
+3. Edge Functions
+   - 関数は`functions`ディレクトリに配置
+   - エラーハンドリングを徹底
+   - パフォーマンスを考慮した実装
+
+4. テスト
+   - 各機能のユニットテストを作成
+   - エッジケースのテストを実施

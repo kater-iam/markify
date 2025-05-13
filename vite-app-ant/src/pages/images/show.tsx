@@ -3,9 +3,9 @@ import { useShow } from "@refinedev/core";
 import { Show } from "@refinedev/antd";
 import { Typography, Space, Card, Image, Spin, message, Button, Descriptions } from "antd";
 import { useParams, useNavigate } from "react-router-dom";
-import { supabaseClient } from "../../utility";
 import { DownloadOutlined, DeleteOutlined } from "@ant-design/icons";
 import { DeleteButton } from "@refinedev/antd";
+import { supabaseClient } from "../../utility";
 
 const { Title } = Typography;
 
@@ -124,7 +124,13 @@ export const ImagesShow = () => {
                         <Descriptions.Item label="オリジナルファイル名">{record?.original_filename}</Descriptions.Item>
                         <Descriptions.Item label="サイズ">{record?.width}x{record?.height}</Descriptions.Item>
                         <Descriptions.Item label="作成日時">
-                            {record?.created_at && new Date(record.created_at).toLocaleDateString("ja-JP", { year: "numeric", month: "2-digit", day: "2-digit" }).replace(/\//g, '年').replace('年', '年').replace('年', '月').replace('月', '月').replace('日', '日')}
+                            {record?.created_at && (() => {
+                                const date = new Date(record.created_at);
+                                const year = date.getFullYear();
+                                const month = String(date.getMonth() + 1).padStart(2, '0');
+                                const day = String(date.getDate()).padStart(2, '0');
+                                return `${year}年${month}月${day}日`;
+                            })()}
                         </Descriptions.Item>
                     </Descriptions>
                 </Card>
