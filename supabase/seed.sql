@@ -69,17 +69,17 @@ FROM generate_series(2, 31) AS gs(i);
 
 
 -- 4. Seed download_logs (5 logs per image)
-INSERT INTO public.download_logs (log_id, profile_id, image_id, client_ip, created_at, updated_at)
-SELECT
-  md5(format('log-id-%s-%s', i.id, log.j))::uuid AS log_id,
-  -- Cycle through general users for logs
-  md5(format('profile-id-%s', ((log.j - 1) % 30) + 2))::uuid AS profile_id,
-  i.id AS image_id,
-  format('192.168.%s.%s', (random() * 255)::integer, (random() * 255)::integer)::inet AS client_ip,
-  now() - interval '1 day' * (random() * 30)::integer,
-  now() - interval '1 day' * (random() * 30)::integer
-FROM public.images i
-CROSS JOIN generate_series(1, 5) AS log(j);
+-- INSERT INTO public.download_logs (log_id, profile_id, image_id, client_ip, created_at, updated_at)
+-- SELECT
+--   md5(format('log-id-%s-%s', i.id, log.j))::uuid AS log_id,
+--   -- Cycle through general users for logs
+--   md5(format('profile-id-%s', ((log.j - 1) % 30) + 2))::uuid AS profile_id,
+--   i.id AS image_id,
+--   format('192.168.%s.%s', (random() * 255)::integer, (random() * 255)::integer)::inet AS client_ip,
+--   now() - interval '1 day' * (random() * 30)::integer,
+--   now() - interval '1 day' * (random() * 30)::integer
+-- FROM public.images i
+-- CROSS JOIN generate_series(1, 5) AS log(j);
 
 -- ウォーターマーク設定の追加
 insert into public.settings (key, value, description)

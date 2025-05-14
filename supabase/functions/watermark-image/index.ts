@@ -204,6 +204,24 @@ serve(async (req: Request) => {
     })
     debug.log('Image processed successfully');
 
+    // ダウンロードログの保存
+    debug.log('Saving download log...');
+    const { error: logError } = await serviceRoleClient
+      .from('download_logs')
+      .insert({
+        user_id: user.id,
+        image_id: imageId,
+        created_at: new Date().toISOString(),
+        ip_address: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
+      });
+
+    if (logError) {
+      debug.error('Failed to save download log:', logError);
+      // ログの保存に失敗しても画像のダウンロードは続行
+    } else {
+      debug.log('Download log saved successfully');
+    }
+
     // 5. レスポンス返却
     const contentType = imageData.original_filename.toLowerCase().endsWith('.png')
       ? 'image/png'
