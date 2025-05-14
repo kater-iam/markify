@@ -53,33 +53,61 @@ INSERT INTO public.profiles (id, user_id, code, first_name, last_name, role, cre
 VALUES (
   '00000000-0000-0000-0000-000000000001',
   '00000000-0000-0000-0000-000000000001',
-  'admin001', 'Admin', 'User', 'admin', now(), now()
+  'admin001', '太郎', '山田', 'admin', now(), now()
 );
 
 -- General user profiles via generate_series
+WITH japanese_names AS (
+  SELECT
+    gs.i,
+    CASE (gs.i % 10)
+      WHEN 0 THEN '佐藤'
+      WHEN 1 THEN '鈴木'
+      WHEN 2 THEN '高橋'
+      WHEN 3 THEN '田中'
+      WHEN 4 THEN '伊藤'
+      WHEN 5 THEN '渡辺'
+      WHEN 6 THEN '山本'
+      WHEN 7 THEN '中村'
+      WHEN 8 THEN '小林'
+      WHEN 9 THEN '加藤'
+    END as last_name,
+    CASE (gs.i % 10)
+      WHEN 0 THEN '翔太'
+      WHEN 1 THEN '陽菜'
+      WHEN 2 THEN '大輝'
+      WHEN 3 THEN '結衣'
+      WHEN 4 THEN '悠真'
+      WHEN 5 THEN '美咲'
+      WHEN 6 THEN '颯太'
+      WHEN 7 THEN '莉子'
+      WHEN 8 THEN '蓮'
+      WHEN 9 THEN '優花'
+    END as first_name
+  FROM generate_series(2, 31) AS gs(i)
+)
 INSERT INTO public.profiles (id, user_id, code, first_name, last_name, role, created_at, updated_at)
 SELECT
-  md5(format('profile-id-%s', gs.i))::uuid AS id,
-  md5(format('user-id-%s', gs.i))::uuid AS user_id,
-  'user' || to_char(gs.i - 1, 'FM000') AS code,
-  'First' || to_char(gs.i - 1, 'FM000') AS first_name,
-  'Last' || to_char(gs.i - 1, 'FM000') AS last_name,
+  md5(format('profile-id-%s', jn.i))::uuid AS id,
+  md5(format('user-id-%s', jn.i))::uuid AS user_id,
+  'user' || to_char(jn.i - 1, 'FM000') AS code,
+  jn.first_name,
+  jn.last_name,
   'general', now(), now()
-FROM generate_series(2, 31) AS gs(i);
-
+FROM japanese_names jn;
 
 -- 4. Seed download_logs (5 logs per image)
-INSERT INTO public.download_logs (log_id, profile_id, image_id, client_ip, created_at, updated_at)
-SELECT
-  md5(format('log-id-%s-%s', i.id, log.j))::uuid AS log_id,
-  -- Cycle through general users for logs
-  md5(format('profile-id-%s', ((log.j - 1) % 30) + 2))::uuid AS profile_id,
-  i.id AS image_id,
-  format('192.168.%s.%s', (random() * 255)::integer, (random() * 255)::integer)::inet AS client_ip,
-  now() - interval '1 day' * (random() * 30)::integer,
-  now() - interval '1 day' * (random() * 30)::integer
-FROM public.images i
-CROSS JOIN generate_series(1, 5) AS log(j);
+-- INSERT INTO public.download_logs (log_id, profile_id, image_id, client_ip, created_at, updated_at)
+-- SELECT
+--   md5(format('log-id-%s-%s', i.id, log.j))::uuid AS log_id,
+--   -- Cycle through general users for logs
+--   md5(format('profile-id-%s', ((log.j - 1) % 30) + 2))::uuid AS profile_id,
+--   i.id AS image_id,
+--   format('192.168.%s.%s', (random() * 255)::integer, (random() * 255)::integer)::inet AS client_ip,
+--   now() - interval '1 day' * (random() * 30)::integer,
+--   now() - interval '1 day' * (random() * 30)::integer
+-- FROM public.images i
+-- CROSS JOIN generate_series(1, 5) AS log(j);
 
 -- ウォーターマーク設定の追加
 insert into public.settings (key, value, description)

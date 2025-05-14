@@ -51,7 +51,10 @@ function App() {
                     create: "/images/create",
                     edit: "/images/edit/:id",
                     show: "/images/show/:id",
-                    meta: { canDelete: true },
+                    meta: {
+                      canDelete: true,
+                      label: "画像管理"
+                    },
                   },
                   // 管理者メニューは一般ユーザーには一切表示されません
                   ...(isAdmin ? [
@@ -68,7 +71,10 @@ function App() {
                       create: "/profiles/create",
                       edit: "/profiles/edit/:id",
                       show: "/profiles/show/:id",
-                      meta: { canDelete: true },
+                      meta: {
+                        canDelete: true,
+                        label: "プロフィール管理"
+                      },
                     },
                     {
                       name: "download_logs",
@@ -76,12 +82,18 @@ function App() {
                       create: "/download_logs/create",
                       edit: "/download_logs/edit/:id",
                       show: "/download_logs/show/:id",
-                      meta: { canDelete: true },
-                      options: { group: "管理者メニュー" },
+                      meta: {
+                        canDelete: true,
+                        label: "ダウンロード履歴",
+                        options: { group: "管理者メニュー" }
+                      },
                     },
                     {
                       name: "settings",
-                      meta: { label: "設定", icon: <SettingOutlined /> },
+                      meta: {
+                        label: "設定",
+                        icon: <SettingOutlined />
+                      },
                       list: "/settings/watermark",
                       options: { group: "管理者メニュー" },
                     },
