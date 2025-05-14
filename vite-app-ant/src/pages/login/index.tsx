@@ -10,22 +10,19 @@ interface LoginFormValues {
   password: string;
 }
 
-export const LoginPage: React.FC = () => {
-  const [form] = Form.useForm<LoginFormValues>();
+export const LoginPage = () => {
   const { mutate: login } = useLogin<LoginFormValues>();
-  const [loading, setLoading] = useState(false);
+  const [form] = Form.useForm<LoginFormValues>();
 
-  const handleUserSelect = ({ email, password }: LoginFormValues) => {
-    form.setFieldsValue({ email, password });
+  const handleUserSelect = (user: { email: string; password: string }) => {
+    form.setFieldsValue({
+      email: user.email,
+      password: user.password,
+    });
   };
 
-  const onFinish = async (values: LoginFormValues) => {
-    setLoading(true);
-    try {
-      await login(values);
-    } finally {
-      setLoading(false);
-    }
+  const onFinish = (values: LoginFormValues) => {
+    login(values);
   };
 
   return (
@@ -33,51 +30,59 @@ export const LoginPage: React.FC = () => {
       style={{
         height: "100vh",
         display: "flex",
-        alignItems: "center",
         justifyContent: "center",
+        alignItems: "center",
+        background: "#f0f2f5",
       }}
     >
-      <Card style={{ width: 400 }}>
-        <Title level={3} style={{ textAlign: "center", marginBottom: 24 }}>
+      <Card
+        style={{
+          width: "400px",
+          boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
+        }}
+      >
+        <Title level={3} style={{ textAlign: "center", marginBottom: "24px" }}>
           ログイン
         </Title>
-        <DebugUserSelect onUserSelect={handleUserSelect} />
-        <Form<LoginFormValues>
+        <Form
           form={form}
-          layout="vertical"
+          name="login"
           onFinish={onFinish}
+          layout="vertical"
           requiredMark={false}
         >
           <Form.Item
-            name="email"
             label="メールアドレス"
+            name="email"
             rules={[
-              { required: true, message: "メールアドレスを入力してください" },
-              { type: "email", message: "有効なメールアドレスを入力してください" },
+              {
+                required: true,
+                message: "メールアドレスを入力してください",
+              },
             ]}
           >
-            <Input size="large" placeholder="example@kater.jp" />
+            <Input size="large" />
           </Form.Item>
           <Form.Item
-            name="password"
             label="パスワード"
-            rules={[{ required: true, message: "パスワードを入力してください" }]}
+            name="password"
+            rules={[
+              {
+                required: true,
+                message: "パスワードを入力してください",
+              },
+            ]}
           >
-            <Input.Password size="large" placeholder="パスワード" />
+            <Input.Password size="large" />
           </Form.Item>
           <Form.Item>
-            <Button
-              type="primary"
-              size="large"
-              htmlType="submit"
-              loading={loading}
-              block
-            >
+            <Button type="primary" htmlType="submit" size="large" block>
               ログイン
             </Button>
           </Form.Item>
         </Form>
+        <DebugUserSelect onUserSelect={handleUserSelect} />
       </Card>
     </div>
   );
-}; 
+};
