@@ -209,10 +209,10 @@ serve(async (req: Request) => {
     const { error: logError } = await serviceRoleClient
       .from('download_logs')
       .insert({
-        user_id: user.id,
+        profile_id: user.id,
         image_id: imageId,
         created_at: new Date().toISOString(),
-        ip_address: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
+        client_ip: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
       });
 
     if (logError) {
