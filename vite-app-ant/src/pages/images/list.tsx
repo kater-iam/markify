@@ -31,7 +31,6 @@ export const ImagesList = () => {
     if (isLoading) {
         return <div>Loading...</div>;
     }
-    console.log('isAdmin' + isAdmin);
 
     const renderHeaderButtons = () => {
         if (isAdmin !== true) {
