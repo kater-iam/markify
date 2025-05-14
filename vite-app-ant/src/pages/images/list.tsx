@@ -8,10 +8,14 @@ import {
     DeleteButton,
     ImageField,
     DateField,
+    CreateButton,
 } from "@refinedev/antd";
 import { Table, Space } from "antd";
+import { useUserRole } from "../../utility/hooks/useUserRole";
 
 export const ImagesList = () => {
+    const { isAdmin, isLoading } = useUserRole();
+
     const { tableProps } = useTable({
         syncWithLocation: true,
     });
@@ -24,8 +28,20 @@ export const ImagesList = () => {
         },
     });
 
+    if (isLoading) {
+        return <div>Loading...</div>;
+    }
+    console.log('isAdmin' + isAdmin);
+
+    const renderHeaderButtons = () => {
+        if (isAdmin !== true) {
+            return [];
+        }
+        return [<CreateButton key="create" />];
+    };
+
     return (
-        <List>
+        <List headerButtons={renderHeaderButtons}>
             <Table {...tableProps} rowKey="id">
                 <Table.Column dataIndex="name" title="Name" />
                 <Table.Column
