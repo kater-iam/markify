@@ -42,8 +42,7 @@ export const DownloadLogsList = () => {
                         profileIsLoading ? (
                             <>Loading...</>
                         ) : (
-                            profileData?.data?.find((item) => item.id === value)
-                                ?.first_name
+                            `${profileData?.data?.find((item) => item.id === value)?.last_name} ${profileData?.data?.find((item) => item.id === value)?.first_name}`
                         )
                     }
                 />
