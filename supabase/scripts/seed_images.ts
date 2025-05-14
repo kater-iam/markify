@@ -32,6 +32,7 @@ import * as dotenv from 'dotenv';
 import sharp from 'sharp';
 import minimist from "minimist";
 import { v4 as uuidv4 } from 'uuid';
+import md5 from 'md5';
 
 // ファイル名パターンと日本語名のマッピング
 const patterns: { [key: string]: string } = {
@@ -122,14 +123,15 @@ async function generateDownloadLogs(supabase: any, imageId: string) {
   // 各画像に対して5つのダウンロードログを生成
   for (let i = 0; i < 5; i++) {
     const profileId = profiles[i % profiles.length].id;
-    const logId = uuidv4();
-    const clientIp = `192.168.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`;
+    // 固定のUUIDを生成（画像IDとインデックスから一意のIDを生成）
+    const logId = md5(`log-${imageId}-${i}`).toString('hex');
+    const clientIp = `192.168.1.${Math.floor(Math.random() * 254) + 1}`;
     const createdAt = new Date(Date.now() - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000));
 
     const { error: logError } = await supabase
       .from('download_logs')
       .insert({
-        log_id: logId,
+        id: logId,
         profile_id: profileId,
         image_id: imageId,
         client_ip: clientIp,
@@ -156,8 +158,8 @@ async function uploadImages(supabase: any) {
       const fileContent = fs.readFileSync(localPath);
       const { width, height } = await getImageMetadata(localPath);
 
-      // 新しいUUIDを生成
-      const imageId = uuidv4();
+      // 固定のUUIDを生成（ファイル名から一意のIDを生成）
+      const imageId = md5(`image-${file}`).toString('hex');
       const newFileName = `${imageId}.jpg`;
 
       const { error: uploadError } = await supabase.storage
