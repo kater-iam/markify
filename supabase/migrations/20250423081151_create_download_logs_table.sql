@@ -1,6 +1,6 @@
 -- 4. DOWNLOAD_LOGS TABLE
 CREATE TABLE public.download_logs (
-  log_id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   profile_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   image_id uuid NOT NULL REFERENCES public.images(id) ON DELETE CASCADE,
   client_ip inet NOT NULL,

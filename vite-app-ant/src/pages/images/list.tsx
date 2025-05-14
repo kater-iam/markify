@@ -43,14 +43,14 @@ export const ImagesList = () => {
     return (
         <List headerButtons={renderHeaderButtons}>
             <Table {...tableProps} rowKey="id">
-                <Table.Column dataIndex="name" title="Name" />
+                <Table.Column dataIndex="name" title="名前" />
                 <Table.Column
                     dataIndex={["created_at"]}
-                    title=""
+                    title="作成日時"
                     render={(value: any) => <DateField value={value} />}
                 />
                 <Table.Column
-                    title="Actions"
+                    title="操作"
                     dataIndex="actions"
                     render={(_, record: BaseRecord) => (
                         <Space>
