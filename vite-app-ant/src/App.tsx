@@ -19,6 +19,7 @@ import { ColorModeContextProvider } from "./contexts/color-mode";
 import { supabaseClient } from "./utility";
 import { Header } from "./components/header";
 import { useUserRole } from "./utility/hooks/useUserRole";
+import { AppTitle } from "./components/AppTitle";
 
 // リソースコンポーネントのインポート
 import { ImagesList, ImagesCreate, ImagesEdit, ImagesShow } from "./pages/images";
@@ -119,7 +120,7 @@ function App() {
                       >
                         <ThemedLayoutV2
                           Header={Header}
-                          Sider={(props) => <ThemedSiderV2 {...props} />}
+                          Sider={(props) => <ThemedSiderV2 {...props} Title={({ collapsed }) => <AppTitle collapsed={collapsed} />} />}
                         >
                           <Outlet />
                         </ThemedLayoutV2>
