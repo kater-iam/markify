@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { useShow } from "@refinedev/core";
+import { useShow, useList } from "@refinedev/core";
 import { Show } from "@refinedev/antd";
-import { Typography, Space, Card, Image, Spin, message, Button, Descriptions } from "antd";
+import { Typography, Space, Card, Image, Spin, message, Button, Descriptions, Table } from "antd";
 import { useParams, useNavigate } from "react-router-dom";
 import { DownloadOutlined, DeleteOutlined } from "@ant-design/icons";
 import { DeleteButton } from "@refinedev/antd";
 import { supabaseClient } from "../../utility";
+import { useUserRole } from "../../utility/hooks/useUserRole";
 
 const { Title } = Typography;
 
@@ -15,9 +16,31 @@ export const ImagesShow = () => {
     const { query } = useShow();
     const { data, isLoading } = query;
     const record = data?.data;
+    const { isAdmin } = useUserRole();
 
     const [imageUrl, setImageUrl] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+
+    // ダウンロード履歴の取得
+    const { data: downloadLogsData, isLoading: isDownloadLogsLoading } = useList({
+        resource: "download_logs",
+        filters: [
+            {
+                field: "image_id",
+                operator: "eq",
+                value: id,
+            },
+        ],
+        sorters: [
+            {
+                field: "created_at",
+                order: "desc",
+            },
+        ],
+        meta: {
+            select: "*, profiles!download_logs_profile_id_fkey(id, first_name, last_name)",
+        },
+    });
 
     const fetchWatermarkedImage = async () => {
         if (!record?.id) return;
@@ -101,6 +124,34 @@ export const ImagesShow = () => {
         />,
     ];
 
+    // ダウンロード履歴のカラム定義
+    const downloadLogsColumns = [
+        {
+            title: "ダウンロード日時",
+            dataIndex: "created_at",
+            key: "created_at",
+            render: (date: string) => {
+                const d = new Date(date);
+                return `${d.getFullYear()}年${String(d.getMonth() + 1).padStart(2, '0')}月${String(d.getDate()).padStart(2, '0')}日 ${String(d.getHours()).padStart(2, '0')}時${String(d.getMinutes()).padStart(2, '0')}分`;
+            },
+        },
+        {
+            title: "ユーザー名",
+            dataIndex: ["profiles"],
+            key: "user_name",
+            render: (profile: { first_name: string; last_name: string; id: string }) => {
+                return (
+                    <Button
+                        type="link"
+                        onClick={() => navigate(`/profiles/show/${profile.id}`)}
+                    >
+                        {`${profile.last_name} ${profile.first_name}`}
+                    </Button>
+                );
+            },
+        },
+    ];
+
     return (
         <Show isLoading={isLoading} headerButtons={headerButtons}>
             <Space direction="vertical" size="large" style={{ width: '100%' }}>
@@ -134,6 +185,18 @@ export const ImagesShow = () => {
                         </Descriptions.Item>
                     </Descriptions>
                 </Card>
+                {isAdmin && (
+                    <Card>
+                        <Title level={5}>ダウンロード履歴</Title>
+                        <Table
+                            dataSource={downloadLogsData?.data}
+                            columns={downloadLogsColumns}
+                            loading={isDownloadLogsLoading}
+                            rowKey="id"
+                            pagination={{ pageSize: 5 }}
+                        />
+                    </Card>
+                )}
             </Space>
         </Show>
     );
