@@ -31,6 +31,9 @@ export const DownloadLogsShow = () => {
                 <Descriptions.Item label="画像ID" span={3}>
                     {record?.image_id}
                 </Descriptions.Item>
+                <Descriptions.Item label="IPアドレス" span={3}>
+                    {record?.client_ip}
+                </Descriptions.Item>
                 <Descriptions.Item label="作成日時" span={3}>
                     {record?.created_at && new Date(record.created_at).toLocaleString('ja-JP')}
                 </Descriptions.Item>

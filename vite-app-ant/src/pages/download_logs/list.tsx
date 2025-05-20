@@ -31,6 +31,11 @@ export const DownloadLogsList = () => {
         },
     });
 
+    const formatDate = (date: string) => {
+        const d = new Date(date);
+        return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
+    };
+
     return (
         // ヘッダーボタンを空配列（ボタンを表示しない）で返す
         <List headerButtons={() => {return []}}>
@@ -61,8 +66,11 @@ export const DownloadLogsList = () => {
                 <Table.Column dataIndex="client_ip" title="IPアドレス" />
                 <Table.Column
                     dataIndex={["created_at"]}
-                    title="作成日（画像ダウンロード日）"
-                    render={(value: any) => <DateField value={value} />}
+                    title="作成日（画像ダウンロード日時）"
+                    render={(value: any) => {
+                        const d = new Date(value);
+                        return `${d.getFullYear()}年${(d.getMonth() + 1).toString().padStart(2, '0')}月${d.getDate().toString().padStart(2, '0')}日 ${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}`;
+                    }}
                 />
                 <Table.Column
                     title="操作"

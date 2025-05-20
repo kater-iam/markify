@@ -10,11 +10,13 @@ import {
     DateField,
     CreateButton,
 } from "@refinedev/antd";
-import { Table, Space } from "antd";
+import { Table, Space, Button } from "antd";
 import { useUserRole } from "../../utility/hooks/useUserRole";
+import { useNavigate } from "react-router-dom";
 
 export const ImagesList = () => {
     const { isAdmin, isLoading } = useUserRole();
+    const navigate = useNavigate();
 
     const { tableProps } = useTable({
         syncWithLocation: true,
@@ -31,7 +33,6 @@ export const ImagesList = () => {
     if (isLoading) {
         return <div>Loading...</div>;
     }
-    console.log('isAdmin' + isAdmin);
 
     const renderHeaderButtons = () => {
         if (isAdmin !== true) {
@@ -40,14 +41,30 @@ export const ImagesList = () => {
         return [<CreateButton key="create" />];
     };
 
+    const formatDate = (date: string) => {
+        const d = new Date(date);
+        return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
+    };
+
     return (
         <List headerButtons={renderHeaderButtons}>
             <Table {...tableProps} rowKey="id">
-                <Table.Column dataIndex="name" title="名前" />
+                <Table.Column
+                    dataIndex="name"
+                    title="名前"
+                    render={(value: string, record: BaseRecord) => (
+                        <Button
+                            type="link"
+                            onClick={() => navigate(`/images/show/${record.id}`)}
+                        >
+                            {value}
+                        </Button>
+                    )}
+                />
                 <Table.Column
                     dataIndex={["created_at"]}
                     title="作成日時"
-                    render={(value: any) => <DateField value={value} />}
+                    render={(value: any) => formatDate(value)}
                 />
                 <Table.Column
                     title="操作"
