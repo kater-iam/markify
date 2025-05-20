@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useShow, useList } from "@refinedev/core";
 import { Show } from "@refinedev/antd";
-import { Typography, Space, Card, Image, Spin, message, Button, Descriptions, Table } from "antd";
+import { Typography, Space, Card, Image, Spin, message, Button, Descriptions, Table, Alert } from "antd";
 import { useParams, useNavigate } from "react-router-dom";
-import { DownloadOutlined, DeleteOutlined } from "@ant-design/icons";
+import { DownloadOutlined, DeleteOutlined, InfoCircleOutlined } from "@ant-design/icons";
 import { DeleteButton } from "@refinedev/antd";
 import { supabaseClient } from "../../utility";
 import { useUserRole } from "../../utility/hooks/useUserRole";
 
-const { Title } = Typography;
+const { Title, Paragraph, Text } = Typography;
 
 export const ImagesShow = () => {
     const navigate = useNavigate();
@@ -17,6 +17,7 @@ export const ImagesShow = () => {
     const { data, isLoading } = query;
     const record = data?.data;
     const { isAdmin } = useUserRole();
+    const isDebugMode = import.meta.env.DEV;
 
     const [imageUrl, setImageUrl] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
@@ -155,6 +156,47 @@ export const ImagesShow = () => {
     return (
         <Show isLoading={isLoading} headerButtons={headerButtons}>
             <Space direction="vertical" size="large" style={{ width: '100%' }}>
+                {isDebugMode && (
+                    <Card>
+                        <Alert
+                            message="システムの目的と機能"
+                            description={
+                                <Space direction="vertical" size="middle">
+                                    <Paragraph>
+                                        <Text strong>このシステムの主な目的：</Text>
+                                    </Paragraph>
+                                    <Paragraph>
+                                        <ul>
+                                            <li>
+                                                <Text strong>ウォーターマーク機能：</Text>
+                                                各ユーザー固有のウォーターマーク（透かし）を画像に自動的に付与します。
+                                                これにより、画像の出所を明確にし、不正使用を防止します。
+                                            </li>
+                                            <li>
+                                                <Text strong>二次配布防止：</Text>
+                                                ウォーターマークの存在により、ダウンロードした画像や書類の二次配布を抑止します。
+                                                透かしにはユーザー固有の情報が含まれるため、不正使用の追跡が可能です。
+                                            </li>
+                                            <li>
+                                                <Text strong>監査ログ機能：</Text>
+                                                管理者は全てのダウンロード履歴を確認できます。
+                                                これにより、画像の使用状況を追跡し、必要に応じて監査を行うことができます。
+                                            </li>
+                                        </ul>
+                                    </Paragraph>
+                                    <Paragraph>
+                                        <Text type="secondary">
+                                            ※このヘルプ情報は開発モードでのみ表示されます。
+                                        </Text>
+                                    </Paragraph>
+                                </Space>
+                            }
+                            type="info"
+                            showIcon
+                            icon={<InfoCircleOutlined />}
+                        />
+                    </Card>
+                )}
                 <Card>
                     {loading ? (
                         <div style={{ textAlign: 'center', padding: '20px' }}>
