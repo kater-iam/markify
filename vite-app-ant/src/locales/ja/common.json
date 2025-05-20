@@ -1,0 +1,136 @@
+{
+  "pages": {
+    "login": {
+      "title": "アカウントにサインイン",
+      "signin": "サインイン",
+      "signup": "サインアップ",
+      "divider": "または",
+      "fields": {
+        "email": "メールアドレス",
+        "password": "パスワード"
+      },
+      "errors": {
+        "validEmail": "無効なメールアドレスです"
+      },
+      "buttons": {
+        "submit": "ログイン",
+        "forgotPassword": "パスワードをお忘れですか？",
+        "noAccount": "アカウントをお持ちでないですか？",
+        "rememberMe": "ログイン状態を保持する"
+      }
+    },
+    "forgotPassword": {
+      "title": "パスワードをお忘れですか？",
+      "fields": {
+        "email": "メールアドレス"
+      },
+      "errors": {
+        "validEmail": "無効なメールアドレスです"
+      },
+      "buttons": {
+        "submit": "リセット手順を送信"
+      }
+    },
+    "register": {
+      "title": "アカウント登録",
+      "fields": {
+        "email": "メールアドレス",
+        "password": "パスワード"
+      },
+      "errors": {
+        "validEmail": "無効なメールアドレスです"
+      },
+      "buttons": {
+        "submit": "登録",
+        "haveAccount": "すでにアカウントをお持ちですか？"
+      }
+    },
+    "updatePassword": {
+      "title": "パスワードの更新",
+      "fields": {
+        "password": "新しいパスワード",
+        "confirmPassword": "新しいパスワード（確認）"
+      },
+      "errors": {
+        "confirmPasswordNotMatch": "パスワードが一致しません"
+      },
+      "buttons": {
+        "submit": "更新"
+      }
+    },
+    "error": {
+      "info": "{{resource}}リソースに{{action}}コンポーネントを追加するのを忘れている可能性があります。",
+      "404": "申し訳ありませんが、アクセスされたページは存在しません。",
+      "resource404": "{{resource}}リソースが作成されているか確認してください。",
+      "backHome": "ホームに戻る"
+    }
+  },
+  "actions": {
+    "list": "一覧",
+    "create": "作成",
+    "edit": "編集",
+    "show": "表示"
+  },
+  "buttons": {
+    "create": "作成",
+    "save": "保存",
+    "logout": "ログアウト",
+    "delete": "削除",
+    "edit": "編集",
+    "cancel": "キャンセル",
+    "confirm": "よろしいですか？",
+    "filter": "フィルター",
+    "clear": "クリア",
+    "refresh": "更新",
+    "show": "表示",
+    "undo": "元に戻す",
+    "import": "インポート",
+    "clone": "複製",
+    "notAccessTitle": "アクセス権限がありません"
+  },
+  "warnWhenUnsavedChanges": "保存されていない変更があります。このページを離れてもよろしいですか？",
+  "notifications": {
+    "success": "成功",
+    "error": "エラー（ステータスコード: {{statusCode}}）",
+    "undoable": "{{seconds}}秒以内に元に戻すことができます",
+    "createSuccess": "{{resource}}の作成に成功しました",
+    "createError": "{{resource}}の作成中にエラーが発生しました（ステータスコード: {{statusCode}}）",
+    "deleteSuccess": "{{resource}}の削除に成功しました",
+    "deleteError": "{{resource}}の削除中にエラーが発生しました（ステータスコード: {{statusCode}}）",
+    "editSuccess": "{{resource}}の編集に成功しました",
+    "editError": "{{resource}}の編集中にエラーが発生しました（ステータスコード: {{statusCode}}）",
+    "importProgress": "インポート中: {{processed}}/{{total}}"
+  },
+  "loading": "読み込み中",
+  "tags": {
+    "clone": "複製"
+  },
+  "dashboard": {
+    "title": "ダッシュボード"
+  },
+  "posts": {
+    "posts": "投稿",
+    "fields": {
+      "id": "ID",
+      "title": "タイトル",
+      "category": "カテゴリー",
+      "status": {
+        "title": "ステータス",
+        "published": "公開済み",
+        "draft": "下書き",
+        "rejected": "却下"
+      },
+      "content": "内容",
+      "createdAt": "作成日時"
+    },
+    "titles": {
+      "create": "投稿を作成",
+      "edit": "投稿を編集",
+      "list": "投稿一覧",
+      "show": "投稿を表示"
+    }
+  },
+  "table": {
+    "actions": "操作"
+  }
+}
