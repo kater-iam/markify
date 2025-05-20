@@ -1,4 +1,4 @@
-import { GitHubBanner, Refine, Authenticated, I18nProvider } from "@refinedev/core";
+import { Refine, Authenticated, I18nProvider } from "@refinedev/core";
 import { DevtoolsPanel, DevtoolsProvider } from "@refinedev/devtools";
 import { RefineKbar, RefineKbarProvider } from "@refinedev/kbar";
 import { useTranslation } from "react-i18next";
@@ -22,7 +22,7 @@ import { supabaseClient } from "./utility";
 import { Header } from "./components/header";
 import { useUserRole } from "./utility/hooks/useUserRole";
 import jaJP from "antd/locale/ja_JP";
-import { AppTitle } from "./components/AppTitle";
+import { CustomBanner } from "./components/CustomBanner";
 
 // リソースコンポーネントのインポート
 import { ImagesList, ImagesCreate, ImagesEdit, ImagesShow } from "./pages/images";
@@ -33,6 +33,8 @@ import { LoginPage } from "./pages/login";
 
 function App() {
   const { t, i18n } = useTranslation();
+
+  // 管理者判定
   const { isAdmin } = useUserRole();
 
   const i18nProvider: I18nProvider = {
@@ -44,11 +46,8 @@ function App() {
     getLocale: () => i18n.language,
   };
 
-  console.log(t("auth.logout"));
-
   return (
-    (<BrowserRouter>
-      <GitHubBanner />
+    <BrowserRouter>
       <RefineKbarProvider>
         <ColorModeContextProvider>
           <ConfigProvider locale={jaJP}>
@@ -123,6 +122,7 @@ function App() {
                     projectId: "8bMwO5-JFTWA5-gbWJmu",
                   }}
                 >
+                  <CustomBanner />
                   <Routes>
                     <Route
                       path="/login"
@@ -136,7 +136,7 @@ function App() {
                         >
                           <ThemedLayoutV2
                             Header={Header}
-                            Sider={(props) => <ThemedSiderV2 {...props} Title={({ collapsed }) => <AppTitle collapsed={collapsed} />} />}
+                            Sider={(props) => <ThemedSiderV2 {...props} />}
                           >
                             <Outlet />
                           </ThemedLayoutV2>
@@ -186,7 +186,7 @@ function App() {
           </ConfigProvider>
         </ColorModeContextProvider>
       </RefineKbarProvider>
-    </BrowserRouter>)
+    </BrowserRouter>
   );
 }
 
